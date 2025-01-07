@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // Declare function prototypes for each kernel runner
-void runNaiveMatmulBenchmark(int m, int n, int k);
+void runNaiveGEMM(int m, int n, int k);
 
 int main() {
   int m = 512; // Number of rows in A and C
@@ -13,7 +13,7 @@ int main() {
 
   // Run the naive kernel benchmark
   printf("Benchmarking Naive GEMM...\n");
-  runNaiveMatmulBenchmark(m, n, k);
+  runNaiveGEMM(m, n, k);
 
   // Add calls to other kernel runners as needed
   // e.g., runOptimizedMatmulBenchmark(m, n, k);
