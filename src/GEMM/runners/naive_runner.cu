@@ -40,8 +40,8 @@ void runNaiveGEMM(int m, int n, int k) {
 
   // Define grid and block dimensions
   int blockDim(BLOCK_SIZE); // 16x16 threads per block
-  int gridDim((n + blockDim.x - 1) / blockDim.x,
-              (m + blockDim.x - 1) / blockDim.y);
+  dim3 gridDim((n + blockDim - 1) / blockDim,
+              (m + blockDim - 1) / blockDim);
 
   // Benchmark the kernel
   cudaEvent_t start, stop;
@@ -49,7 +49,7 @@ void runNaiveGEMM(int m, int n, int k) {
   cudaEventCreate(&stop);
 
   cudaEventRecord(start);
-  naiveMatmulKernel<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k);
+  naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k);
   cudaEventRecord(stop);
 
   // Wait for the kernel to finish and measure time
