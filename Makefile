@@ -15,7 +15,9 @@ OUTPUT = benchmark_gemm
 # Source files
 SOURCES = $(SRC_DIR)/benchmark_gemm.cu \
           $(GEMM_RUNNERS)/naive_runner.cu \
+          $(GEMM_RUNNERS)/naive_coalescing_runner.cu \
           $(GEMM_KERNELS)/naive.cu \
+          $(GEMM_KERNELS)/naiveCoalescing.cu \
           $(UTILS)/util.cu
 
 # Object files
