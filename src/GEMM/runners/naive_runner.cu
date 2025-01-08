@@ -54,7 +54,7 @@ void runNaiveGEMM(uint m, uint n, uint k) {
   // Wait for the kernel to finish and measure time
   cudaEventSynchronize(stop);
   float milliseconds = 0;
-  cudaEventElapsedTime(&milliseconds, start, stop);
+  cudaEventElapsedTime(&milliseconds, start);
 
   // Copy result back to host
   cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
@@ -64,9 +64,14 @@ void runNaiveGEMM(uint m, uint n, uint k) {
   printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
   // Print performance metrics
-  printf("Kernel execution time  (ms): %f \n", milliseconds);
-  printf("Effective Bandwidth  (GB/S): %f \n",
-         m * n * 4 * 3 / milliseconds / 1e6);
+  float seconds = milliseconds / 1000.0;  // Convert to seconds
+  float flop = 2.0 * m * n * k;           // FLOP for matrix multiplication
+  float tflops = flop / (seconds * 1e12); // TFLOPS
+  float bandwidth = (size_A + size_B + size_C) / 1e9 / seconds; // GB/s
+
+  printf("Kernel execution time (ms): %f \n", milliseconds);
+  printf("Effective Bandwidth (GB/s): %f \n", bandwidth);
+  printf("Performance (TFLOPS): %f \n", tflops);
 
   // Clean up
   free(h_A);
