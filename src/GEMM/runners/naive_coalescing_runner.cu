@@ -43,20 +43,35 @@ void runNaiveCoalescingGEMM(uint m, uint n, uint k) {
   int blockDim(BLOCK_SIZE); // 16x16 threads per block
   dim3 gridDim((n + blockDim - 1) / blockDim, (m + blockDim - 1) / blockDim);
 
-  // Benchmark the kernel
+  // Warmup loop
+  for (int i = 0; i < 10; ++i) {
+    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
+                                               beta);
+  }
+  cudaDeviceSynchronize(); // Ensure all operations are finished
+
+  // Benchmark loop
+  int numRuns = 100;
+  float totalMilliseconds = 0;
+
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  cudaEventRecord(start);
-  naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
-                                             beta);
-  cudaEventRecord(stop);
+  for (int i = 0; i < numRuns; ++i) {
+    cudaEventRecord(start);
+    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
+                                               beta);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
 
-  // Wait for the kernel to finish and measure time
-  cudaEventSynchronize(stop);
-  float milliseconds = 0;
-  cudaEventElapsedTime(&milliseconds, start, stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    totalMilliseconds += milliseconds;
+  }
+
+  // Compute average execution time
+  float averageMilliseconds = totalMilliseconds / numRuns;
 
   // Copy result back to host
   cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
@@ -66,12 +81,12 @@ void runNaiveCoalescingGEMM(uint m, uint n, uint k) {
   printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
   // Print performance metrics
-  float seconds = milliseconds / 1000.0;  // Convert to seconds
+  float seconds = averageMilliseconds / 1000.0; // Convert to seconds
   float flop = 2.0 * m * n * k;           // FLOP for matrix multiplication
   float tflops = flop / (seconds * 1e12); // TFLOPS
   float bandwidth = (size_A + size_B + size_C) / 1e9 / seconds; // GB/s
 
-  printf("Kernel execution time (ms): %f \n", milliseconds);
+  printf("Kernel average execution time (ms): %f \n", averageMilliseconds);
   printf("Effective Bandwidth (GB/s): %f \n", bandwidth);
   printf("Performance (TFLOPS): %f \n", tflops);
 
