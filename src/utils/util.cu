@@ -1,4 +1,4 @@
-#include "util.h"
+#include "util.cuh"
 
 void initRandMatrix(float *A, int m, int n) {
   for (int i = 0; i < m; i++) {

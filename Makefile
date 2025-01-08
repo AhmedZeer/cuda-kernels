@@ -35,9 +35,6 @@ $(OUTPUT): $(OBJECTS)
 %.o: %.cu
 	$(NVCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-%.o: %.c
-	$(NVCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
 # Clean up build artifacts
 clean:
 	rm -f $(OBJECTS) $(OUTPUT)

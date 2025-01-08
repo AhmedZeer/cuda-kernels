@@ -1,13 +1,13 @@
-#include "../../utils/util.h"
+#include "../../utils/util.cuh"
 #include "../headers/common.cuh"
 #include <stdio.h>
 #define BLOCK_SIZE 256
 
 // Kernel declaration from naive.cu
-extern __global__ void naiveGEMM(float *A, float *B, float *C, int m, int n,
-                                 int k, float alpha, float beta);
+extern __global__ void naiveGEMM(float *A, float *B, float *C, uint m, uint n,
+                                 uint k, float alpha, float beta);
 
-void runNaiveGEMM(int m, int n, int k) {
+void runNaiveGEMM(uint m, uint n, uint k) {
   // Host matrices
   float *h_A, *h_B, *h_C, *h_C_ref;
   size_t size_A = m * k * sizeof(float);
