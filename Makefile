@@ -16,7 +16,7 @@ OUTPUT = benchmark_gemm
 SOURCES = $(SRC_DIR)/benchmark_gemm.cu \
           $(GEMM_RUNNERS)/naive_runner.cu \
           $(GEMM_KERNELS)/naive.cu \
-          $(UTILS)/util.c
+          $(UTILS)/util.cu
 
 # Object files
 OBJECTS = $(SOURCES:.cu=.o)
