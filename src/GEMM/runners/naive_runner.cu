@@ -64,7 +64,9 @@ void runNaiveGEMM(uint m, uint n, uint k) {
   printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
   // Print performance metrics
-  printf("Kernel execution time: %f ms\n", milliseconds);
+  printf("Kernel execution time  (ms): %f \n", milliseconds);
+  printf("Effective Bandwidth  (GB/S): %f \n",
+         m * n * 4 * 3 / milliseconds / 1e6);
 
   // Clean up
   free(h_A);
