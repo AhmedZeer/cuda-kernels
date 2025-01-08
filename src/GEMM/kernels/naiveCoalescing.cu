@@ -1,7 +1,7 @@
-__global__ naiveCoalescingGEMM(float *A, float *B, float *C, uint m, uint n, uint k, float alpha, float beta){
+__global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m, uint n, uint k, float alpha, float beta){
   // C = alpha * A @ beta - beta * C
-  int threadRow = blockIdx.y * blockDim.x + threadIdx.x / m;
-  int threadCol = blockIdx.x * blockDim.x + threadIdx.x % n;
+  int threadRow = blockIdx.y * blockDim.x + (threadIdx.x / blockDim.x);
+  int threadCol = blockIdx.x * blockDim.x + (threadIdx.x % blockDim.x);
 
   if( threadRow < m && threadCol < n ){
     float tmp = 0.0f;

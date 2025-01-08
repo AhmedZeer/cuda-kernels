@@ -54,7 +54,7 @@ void runNaiveGEMM(uint m, uint n, uint k) {
   // Wait for the kernel to finish and measure time
   cudaEventSynchronize(stop);
   float milliseconds = 0;
-  cudaEventElapsedTime(&milliseconds, start);
+  cudaEventElapsedTime(&milliseconds, start, stop);
 
   // Copy result back to host
   cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
