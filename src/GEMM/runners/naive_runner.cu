@@ -1,12 +1,11 @@
 #include "../../utils/util.h"
 #include "../headers/common.cuh"
-#include <cuda_runtime.h>
 #include <stdio.h>
 #define BLOCK_SIZE 256
 
 // Kernel declaration from naive.cu
 extern __global__ void naiveGEMM(float *A, float *B, float *C, int m, int n,
-                                 int k);
+                                 int k, float alpha, float beta);
 
 void runNaiveGEMM(int m, int n, int k) {
   // Host matrices
@@ -14,6 +13,7 @@ void runNaiveGEMM(int m, int n, int k) {
   size_t size_A = m * k * sizeof(float);
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
+  float alpha = 1, beta = 0;
 
   // Allocate host memory
   h_A = (float *)malloc(size_A);
@@ -40,8 +40,7 @@ void runNaiveGEMM(int m, int n, int k) {
 
   // Define grid and block dimensions
   int blockDim(BLOCK_SIZE); // 16x16 threads per block
-  dim3 gridDim((n + blockDim - 1) / blockDim,
-              (m + blockDim - 1) / blockDim);
+  dim3 gridDim((n + blockDim - 1) / blockDim, (m + blockDim - 1) / blockDim);
 
   // Benchmark the kernel
   cudaEvent_t start, stop;
@@ -49,7 +48,7 @@ void runNaiveGEMM(int m, int n, int k) {
   cudaEventCreate(&stop);
 
   cudaEventRecord(start);
-  naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k);
+  naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   cudaEventRecord(stop);
 
   // Wait for the kernel to finish and measure time
