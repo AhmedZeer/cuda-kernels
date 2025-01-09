@@ -1,4 +1,4 @@
-template <uint BLOCK_SIZE>
+template <const uint BLOCKSIZE>
 __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
                             uint k, float alpha, float beta) {
 
@@ -8,6 +8,7 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
   uint threadRow = blockDim.x / BLOCKSIZE;
   uint threadCol = blockDim.x % BLOCKSIZE;
 
+  float sum = 0.0f;
   if (cRow < m && cCol < n) {
     A += cRow * BLOCKSIZE * k;
     B += cCol * BLOCKSIZE;
@@ -15,7 +16,6 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
 
     __shared__ float As[BLOCKSIZE * BLOCKSIZE];
     __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
-    float sum = 0.0f;
     for (int blkIdx = 0; blkIdx < k; blkIdx += BLOCKSIZE) {
 
       // Populating Shared Memory.

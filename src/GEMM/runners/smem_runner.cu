@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // Kernel declaration from naive.cu
-template <uint BLOCK_SIZE>
+template <const uint BLOCK_SIZE>
 extern __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
                                    uint k, float alpha, float beta);
 
@@ -14,7 +14,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
   float alpha = 1, beta = 0;
-  uint BLOCK_SIZE = 32;
+  const uint BLOCK_SIZE = 32;
 
   // Allocate host memory
   h_A = (float *)malloc(size_A);
