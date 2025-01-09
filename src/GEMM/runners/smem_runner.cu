@@ -3,9 +3,9 @@
 #include <stdio.h>
 
 // Kernel declaration from naive.cu
+template <uint BLOCK_SIZE>
 extern __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
-                                   uint k, float alpha, float beta,
-                                   uint BLOCK_SIZE);
+                                   uint k, float alpha, float beta);
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
@@ -45,8 +45,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   // Warmup loop
   for (int i = 0; i < 10; ++i) {
-    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta,
-                                       BLOCK_SIZE);
+    SMEMCaching<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
@@ -60,8 +60,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
-    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta,
-                                       BLOCK_SIZE);
+    SMEMCaching<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
