@@ -11,7 +11,7 @@ typedef unsigned int uint;
 extern __global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m, uint n,
                                             uint k, float alpha, float beta);
 
-void naiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
+void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
                     uint k) {
   // Host matrices
   float *h_C;
