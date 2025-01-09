@@ -4,7 +4,8 @@
 
 // Kernel declaration from naive.cu
 extern __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
-                                   uint k, float alpha, float beta);
+                                   uint k, float alpha, float beta,
+                                   uint BLOCK_SIZE);
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
@@ -13,7 +14,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
   float alpha = 1, beta = 0;
-  uint BLOCK_SIZE=32;
+  uint BLOCK_SIZE = 32;
 
   // Allocate host memory
   h_A = (float *)malloc(size_A);
@@ -44,7 +45,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   // Warmup loop
   for (int i = 0; i < 10; ++i) {
-    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta, BLOCK_SIZE);
+    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta,
+                                       BLOCK_SIZE);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
@@ -58,7 +60,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
-    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta, BLOCK_SIZE);
+    SMEMCaching<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta,
+                                       BLOCK_SIZE);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
