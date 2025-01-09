@@ -20,7 +20,7 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   const uint BK = 8;
   const uint TM = 8;
 
-  const uint BLOCK_SIZE = (BM * BN) / TM; // Adjusted to 16 for better occupancy
+  const uint BLOCK_SIZE = (BM * BN); // Adjusted to 16 for better occupancy
 
   size_t size_A = m * k * sizeof(float);
   size_t size_B = k * n * sizeof(float);
@@ -40,7 +40,7 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 16x16 threads per block
+  dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE); // 16x16 threads per block
   dim3 gridDim((BN + n - 1) / BN,
                (BM + m - 1) / BM);
 
