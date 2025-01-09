@@ -2,8 +2,8 @@
 template <const uint BLOCKSIZE>
 __global__ void naiveGEMM(float *A, float *B, float *C, uint m, uint n, uint k,
                           float alpha, float beta) {
-  int threadRow = blockDim.y * blockIdx.y + threadIdx.y;
-  int threadCol = blockDim.x * blockIdx.x + threadIdx.x;
+  int threadRow = BLOCKSIZE * blockIdx.y + threadIdx.y;
+  int threadCol = BLOCKSIZE * blockIdx.x + threadIdx.x;
 
   if (threadRow < m && threadCol < n) {
     float sum = 0.0f;
