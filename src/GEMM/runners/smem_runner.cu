@@ -36,8 +36,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaMemcpy(d_B, h_B, size_B, cudaMemcpyHostToDevice);
 
   // Define grid and block dimensions
-  int blockDim(BLOCK_SIZE); // 16x16 threads per block
-  dim3 gridDim((n + blockDim - 1) / blockDim, (m + blockDim - 1) / blockDim);
+  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 16x16 threads per block
+  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
@@ -47,7 +47,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
   // Benchmark loop
-  int numRuns = 5;
+  int numRuns = 3;
   float totalMilliseconds = 0;
 
   cudaEvent_t start, stop;
