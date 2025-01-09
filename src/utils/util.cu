@@ -49,7 +49,7 @@ float maxDifferenceBetweenMatrices(float *A, float *B, int m, int n) {
 bool validateMatrices(float *A, float *B, int m, int n, float epsilon) {
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      if (A[i * n + j] - B[i * n + j] > epsilon)
+      if (fabs(A[i * n + j] - B[i * n + j]) > epsilon)
         return false;
     }
   }
