@@ -1,5 +1,5 @@
 template<int BM, int BN, int BK, int TM>
-__global__ blockTiling1d(float *A, float *B, float *C, int m, int n, int k){
+__global__ void blockTiling1d(float *A, float *B, float *C, int m, int n, int k){
 
   int cRow = blockIdx.y;
   int cCol = blockIdx.x;
@@ -26,11 +26,11 @@ __global__ blockTiling1d(float *A, float *B, float *C, int m, int n, int k){
     __syncthreads();
     
     As += BK;
-    Bs += BN * N;
+    Bs += BN * n;
 
     for(int i = 0; i < BK; i++){
       for(int resIdx = 0 ; resIdx < TM; resIdx ++){
-        threadResults[resIdx] += As[(threadRow * TM + resIdx) * BK + i] * Bs[i*BN + threadCol]
+        threadResults[resIdx] += As[(threadRow * TM + resIdx) * BK + i] * Bs[i*BN + threadCol];
       }
     }
     __syncthreads();
