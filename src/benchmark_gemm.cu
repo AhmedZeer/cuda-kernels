@@ -7,6 +7,7 @@ void runNaiveGEMM(float *A, float *B, float *C, uint m, uint n, uint k);
 void runNaiveCoalescingGEMM(float *A, float *B, float *C, uint m, uint n,
                             uint k);
 void runSMEMCaching(float *A, float *B, float *C, uint m, uint n, uint k);
+void runblockTiling1d(float *A, float *B, float *C, uint m, uint n, uint k);
 
 int main() {
   printf("=== GEMM Benchmark ===\n");
@@ -31,6 +32,9 @@ int main() {
 
   printf("\nBenchmarking SMEM Caching GEMM...\n");
   runSMEMCaching(A, B, C, m, n, k);
+
+  printf("\nBenchmarking 1D Block Tiling Caching GEMM...\n");
+  runblockTiling1d(A, B, C, m, n, k);
 
   free(A);
   free(B);
