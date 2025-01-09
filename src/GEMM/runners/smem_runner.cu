@@ -3,9 +3,10 @@
 #include <stdio.h>
 
 // Kernel declaration from naive.cu
-template <const uint BLOCK_SIZE>
-extern __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
-                                   uint k, float alpha, float beta);
+template <>
+__global__ void SMEMCaching<const uint>(float *A, float *B, float *C, uint m,
+                                        uint n, uint k, float alpha,
+                                        float beta);
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
