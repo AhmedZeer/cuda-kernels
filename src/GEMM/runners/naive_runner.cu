@@ -43,13 +43,13 @@ void runNaiveGEMM(uint m, uint n, uint k) {
   dim3 gridDim((n + blockDim - 1) / blockDim, (m + blockDim - 1) / blockDim);
 
   // Warmup loop
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 5; ++i) {
     naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
   // Benchmark loop
-  int numRuns = 100;
+  int numRuns = 10;
   float totalMilliseconds = 0;
 
   cudaEvent_t start, stop;

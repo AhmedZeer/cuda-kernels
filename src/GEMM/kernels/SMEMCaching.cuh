@@ -5,29 +5,25 @@ template <const uint BLOCKSIZE>
 __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
                             uint k, float alpha, float beta) {
 
-  uint cRow = blockIdx.y;
-  uint cCol = blockIdx.x;
+  const uint cRow = blockIdx.y;
+  const uint cCol = blockIdx.x;
 
-  uint threadRow = blockDim.x / BLOCKSIZE;
-  uint threadCol = blockDim.x % BLOCKSIZE;
+  const uint threadRow = threadIdx.x / BLOCKSIZE;
+  const uint threadCol = threadIdx.x % BLOCKSIZE;
 
   float sum = 0.0f;
-  if (cRow < m && cCol < n) {
-    A += cRow * BLOCKSIZE * k;
-    B += cCol * BLOCKSIZE;
-    C += cCol * BLOCKSIZE + cRow * BLOCKSIZE * n;
+  A += cRow * BLOCKSIZE * k;
+  B += cCol * BLOCKSIZE;
+  C += cCol * BLOCKSIZE + cRow * BLOCKSIZE * n;
 
-    __shared__ float As[BLOCKSIZE * BLOCKSIZE];
-    __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
+  __shared__ float As[BLOCKSIZE * BLOCKSIZE];
+  __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
+  if(cRow < m && cCol < n){
     for (int blkIdx = 0; blkIdx < k; blkIdx += BLOCKSIZE) {
 
       // Populating Shared Memory.
-      for (int i = 0; i < BLOCKSIZE; i++) {
-        for (int j = 0; j < BLOCKSIZE; j++) {
-          As[i * BLOCKSIZE + j] = A[i * k + j];
-          Bs[i * BLOCKSIZE + j] = B[i * n + j];
-        }
-      }
+      As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * k + threadCol];
+      Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * n + threadCol];
       __syncthreads();
 
       // Shift the tile.
@@ -39,7 +35,8 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
       }
       __syncthreads();
     }
+
+    C[threadRow * n + threadCol] =
+    alpha * sum + beta * C[threadRow * n + threadCol];
   }
-  C[threadRow * n + threadCol] =
-      alpha * sum + beta * C[threadRow * n + threadCol];
 }
