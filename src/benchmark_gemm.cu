@@ -7,9 +7,9 @@ void runNaiveCoalescingGEMM(uint m, uint n, uint k);
 void runSMEMCaching(uint m, uint n, uint k);
 
 int main() {
-  uint m = 512 * 2; // Number of rows in A and C
-  uint n = 512 * 2; // Number of columns in B and C
-  uint k = 512 * 2; // Number of columns in A and rows in B
+  uint m = 512 * 4; // Number of rows in A and C
+  uint n = 512 * 4; // Number of columns in B and C
+  uint k = 512 * 4; // Number of columns in A and rows in B
 
   printf("=== GEMM Benchmark ===\n");
 

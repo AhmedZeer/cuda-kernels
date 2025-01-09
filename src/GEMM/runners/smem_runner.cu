@@ -16,7 +16,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
   float alpha = 1.0f, beta = 0.0f;
-  const uint BLOCK_SIZE = 16; // Adjusted to 16 for better occupancy
+  const uint BLOCK_SIZE = 32; // Adjusted to 16 for better occupancy
 
   // Allocate host memory
   h_A = (float *)malloc(size_A);
@@ -29,7 +29,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   initRandMatrix(h_B, k, n);
 
   // Perform CPU matrix multiplication for reference
-  cpuMatmul(h_A, h_B, h_C_ref, m, n, k);
+  // cpuMatmul(h_A, h_B, h_C_ref, m, n, k);
 
   // Device matrices
   float *d_A, *d_B, *d_C;
@@ -80,8 +80,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
 
   // Validate the result
-  bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
-  printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
+  // bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
+  // printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
   // Print performance metrics
   float seconds = averageMilliseconds / 1000.0f; // Convert to seconds

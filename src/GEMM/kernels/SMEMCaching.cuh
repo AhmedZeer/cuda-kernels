@@ -46,3 +46,4 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
     C[cRow * n + cCol] = alpha * sum + beta * C[cRow * n + cCol];
   }
 }
+
