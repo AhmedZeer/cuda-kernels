@@ -1,12 +1,7 @@
 #include "../../utils/util.cuh"
+#include "../headers/SMEMCaching.cuh" // Include the kernel header
 #include "../headers/common.cuh"
 #include <stdio.h>
-
-// Kernel declaration from naive.cu
-template <>
-extern __global__ void SMEMCaching<uint>(float *A, float *B, float *C, uint m,
-                                         uint n, uint k, float alpha,
-                                         float beta);
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices

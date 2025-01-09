@@ -1,3 +1,5 @@
+#include "../headers/SMEMCaching.cuh"
+
 template <const uint BLOCKSIZE>
 __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
                             uint k, float alpha, float beta) {
