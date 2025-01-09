@@ -1,6 +1,6 @@
 template <const uint BM, const uint BN, const uint BK, const uint TM>
-__global__ void blockTiling1d(float *A, float *B, float *C, int m, int n,
-                              int k) {
+__global__ void blockTiling1d(float *A, float *B, float *C, int m, int n, int k,
+                              float alpha, float beta) {
 
   int cRow = blockIdx.y;
   int cCol = blockIdx.x;
