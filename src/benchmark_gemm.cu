@@ -24,13 +24,13 @@ int main() {
   printf("Calculating CPU...\n");
   cpuMatmul(A, B, C, m, n, k);
 
-  /*
   printf("Benchmarking Naive GEMM...\n");
   runNaiveGEMM(A, B, C, m, n, k);
 
   printf("\nBenchmarking Naive Coalescing GEMM...\n");
   runNaiveCoalescingGEMM(A, B, C, m, n, k);
-  */
+  /*
+   */
 
   printf("\nBenchmarking SMEM Caching GEMM...\n");
   runSMEMCaching(A, B, C, m, n, k);
