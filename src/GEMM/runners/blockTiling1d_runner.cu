@@ -15,10 +15,10 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   float *h_C;
   float alpha = 1.0f, beta = 0.0f;
 
-  const int BM = 64;
-  const int BN = 64;
-  const int BK = 64;
-  const int TM = 8;
+  const uint BM = 64;
+  const uint BN = 64;
+  const uint BK = 64;
+  const uint TM = 8;
 
   const uint BLOCK_SIZE = (BM * BN) / TM; // Adjusted to 16 for better occupancy
 
