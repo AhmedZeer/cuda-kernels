@@ -1,6 +1,5 @@
-__global__ void SMEMCaching(float* A, float *B, float *C, uint m, uint n, uint k, float alpha, float beta){
+__global__ void SMEMCaching(float* A, float *B, float *C, uint m, uint n, uint k, float alpha, float beta, uint BLOCKSIZE){
 
-  uint BLOCKSIZE = blockDim.x;
   uint cRow = blockIdx.y;
   uint cCol = blockIdx.x;
 
@@ -12,8 +11,8 @@ __global__ void SMEMCaching(float* A, float *B, float *C, uint m, uint n, uint k
     B += cCol * BLOCKSIZE;
     C += cCol * BLOCKSIZE + cRow * BLOCKSIZE * n;
     
-    __shared__ As[BLOCKSIZE * BLOCKSIZE];
-    __shared__ Bs[BLOCKSIZE * BLOCKSIZE];
+    __shared__ float As[BLOCKSIZE * BLOCKSIZE];
+    __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
     float sum = 0.0f;
     for(int blkIdx = 0; blkIdx < k; blkIdx += BLOCKSIZE){
       
@@ -31,7 +30,7 @@ __global__ void SMEMCaching(float* A, float *B, float *C, uint m, uint n, uint k
       B += BLOCKSIZE * n;
       
       for(int i = 0; i < BLOCKSIZE ; i++){
-        sum += As[threadRow * BLOCKSIZE + i] * Bs[i * BLOCKSIZE + threadCol]
+        sum += As[threadRow * BLOCKSIZE + i] * Bs[i * BLOCKSIZE + threadCol];
       }
       __syncthreads();
     }
