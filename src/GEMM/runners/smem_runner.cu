@@ -9,7 +9,7 @@ typedef unsigned int uint;
 #define UINT_DEFINED
 #endif
 
-void runSMEMCaching(float *A, float *B, float *h_C_ref, uint m, uint n,
+void runSMEMCaching(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
                     uint k) {
   // Host matrices
   float *h_C;
