@@ -1,4 +1,3 @@
-#include "GEMM/headers/common.cuh"
 #include "utils/util.cuh"
 #include <cstdlib>
 #include <stdio.h>

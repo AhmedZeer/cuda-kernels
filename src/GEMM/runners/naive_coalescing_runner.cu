@@ -1,5 +1,6 @@
 #include "../../utils/util.cuh"
 #include "../headers/common.cuh"
+#include "../kernels/naiveCoalescing.cuh"
 #include <stdio.h>
 
 // Define 'uint' if not defined in common.cuh
@@ -7,10 +8,6 @@
 typedef unsigned int uint;
 #define UINT_DEFINED
 #endif
-
-extern __global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m,
-                                           uint n, uint k, float alpha,
-                                           float beta);
 
 void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m,
                             uint n, uint k) {
