@@ -17,6 +17,7 @@ SOURCES = $(SRC_DIR)/benchmark_gemm.cu \
           $(GEMM_RUNNERS)/naive_runner.cu \
           $(GEMM_RUNNERS)/naive_coalescing_runner.cu \
           $(GEMM_RUNNERS)/smem_runner.cu \
+          $(GEMM_RUNNERS)/blockTiling1d_runner.cu \
           $(UTILS)/util.cu
 
 # Object files
