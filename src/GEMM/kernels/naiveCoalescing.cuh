@@ -11,7 +11,10 @@ __global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m,
     for (int i = 0; i < k; i++) {
       sum += A[threadRow * k + i] * B[i * n + threadCol];
     }
+    C[threadRow * n + threadCol] = sum;
+    /*
     C[threadRow * n + threadCol] =
         alpha * sum + beta * C[threadRow * n + threadCol];
+    */
   }
 }
