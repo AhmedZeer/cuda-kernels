@@ -11,9 +11,9 @@ void runSMEMCaching(float *A, float *B, float *C, uint m, uint n, uint k);
 int main() {
   printf("=== GEMM Benchmark ===\n");
 
-  uint m = 512 * 2; // Number of rows in A and C
-  uint n = 512 * 2; // Number of columns in B and C
-  uint k = 512 * 2; // Number of columns in A and rows in B
+  uint m = 512 * 1; // Number of rows in A and C
+  uint n = 512 * 1; // Number of columns in B and C
+  uint k = 512 * 1; // Number of columns in A and rows in B
   float *A = (float *)malloc(sizeof(float) * m * k);
   float *B = (float *)malloc(sizeof(float) * k * n);
   float *C = (float *)malloc(sizeof(float) * m * n);
