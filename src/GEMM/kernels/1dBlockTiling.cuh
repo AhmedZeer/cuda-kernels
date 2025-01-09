@@ -21,19 +21,27 @@ __global__ void blockTiling1d(float *A, float *B, float *C, int m, int n, int k,
   float threadResults[TM] = {0.0f};
 
   for (int blkIdx = 0; blkIdx < k; blkIdx++) {
-    As[innerRowA][innerColA] = A[innerRowA * k + innerColA];
-    Bs[threadRow][threadCol] = B[threadRow * n + threadCol];
+
+    if (innerRowA < BM && blkIdx + innerColA < k) {
+      As[innerRowA][innerColA] = A[innerRowA * k + (blkIdx + innerColA)];
+    }
+
+    // B is loaded in column-major format for the B matrix
+    if (innerRowA < BK && threadCol < BN && blkIdx + threadRow < k) {
+      Bs[innerRowA][threadCol] = B[(blkIdx + innerRowA) * n + threadCol];
+    }
 
     __syncthreads();
 
+    /*
     A += BK;
     B += BN * n;
+    */
 
     for (int i = 0; i < BK; i++) {
       float tmpB = Bs[i][threadCol];
       for (int resIdx = 0; resIdx < TM; resIdx++) {
-        threadResults[resIdx] +=
-            As[(threadRow * TM + resIdx)][i] * tmpB;
+        threadResults[resIdx] += As[(threadRow * TM + resIdx)][i] * tmpB;
       }
     }
     __syncthreads();
