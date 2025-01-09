@@ -1,5 +1,4 @@
 #include "../headers/common.cuh" // Ensure 'uint' is defined as 'unsigned int'
-#include <cuda_runtime.h>
 
 template <const uint BLOCKSIZE>
 __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
@@ -20,13 +19,15 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
 
     // Load data into shared memory with boundary checks
     if ((cRow < m) && (blkIdx * BLOCKSIZE + threadIdx.x) < k) {
-      As[threadIdx.y][threadIdx.x] = A[cRow * k + blkIdx * BLOCKSIZE + threadIdx.x];
+      As[threadIdx.y][threadIdx.x] =
+          A[cRow * k + blkIdx * BLOCKSIZE + threadIdx.x];
     } else {
       As[threadIdx.y][threadIdx.x] = 0.0f;
     }
 
     if ((blkIdx * BLOCKSIZE + threadIdx.y) < k && (cCol < n)) {
-      Bs[threadIdx.y][threadIdx.x] = B[(blkIdx * BLOCKSIZE + threadIdx.y) * n + cCol];
+      Bs[threadIdx.y][threadIdx.x] =
+          B[(blkIdx * BLOCKSIZE + threadIdx.y) * n + cCol];
     } else {
       Bs[threadIdx.y][threadIdx.x] = 0.0f;
     }
@@ -46,4 +47,3 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
     C[cRow * n + cCol] = alpha * sum + beta * C[cRow * n + cCol];
   }
 }
-

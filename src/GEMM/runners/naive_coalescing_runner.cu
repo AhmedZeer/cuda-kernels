@@ -43,8 +43,8 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m,
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
-    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
-                                               beta);
+    naiveCoalescingGEMM<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
@@ -58,8 +58,8 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m,
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
-    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
-                                               beta);
+    naiveCoalescingGEMM<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 

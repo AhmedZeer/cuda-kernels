@@ -36,13 +36,14 @@ void runNaiveGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE); // 16x16 threads per block
+  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 16x16 threads per block
   dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
                (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
-    naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+    naiveGEMM<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
@@ -56,7 +57,8 @@ void runNaiveGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
-    naiveGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+    naiveGEMM<BLOCK_SIZE>
+        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
