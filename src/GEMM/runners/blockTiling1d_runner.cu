@@ -20,7 +20,8 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   const uint BK = 8;
   const uint TM = 8;
 
-  const uint BLOCK_SIZE = (BM * BN); // Adjusted to 16 for better occupancy
+  // const uint BLOCK_SIZE = 32;
+  const uint BLOCK_SIZE = BM * BN / TM;
 
   size_t size_A = m * k * sizeof(float);
   size_t size_B = k * n * sizeof(float);
@@ -40,9 +41,8 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE); // 16x16 threads per block
-  dim3 gridDim((BN + n - 1) / BN,
-               (BM + m - 1) / BM);
+  dim3 blockDim(BLOCK_SIZE); // 16x16 = 256 threads per block
+  dim3 gridDim((n + BN - 1) / BN, (m + BM - 1) / BM);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
@@ -84,10 +84,13 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   float maxDiff = maxDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
   printf("Max Diff: %f\n", maxDiff);
 
+  float minDiff = minDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
+  printf("Min Diff: %f\n", minDiff);
+
   // Print performance metrics
   float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
-  float flop = 2.0f * m * n * k;           // FLOP for matrix multiplication
-  float tflops = flop / (seconds * 1e12f); // TFLOPS
+  float flop = 2.0f * m * n * k;                   // FLOP for matrix multiplication
+  float tflops = flop / (seconds * 1e12f);         // TFLOPS
   float bandwidth = (size_A + size_B + size_C) / 1e9f / seconds; // GB/s
 
   printf("Kernel average execution time (ms): %f\n", averageMilliseconds);
@@ -102,3 +105,4 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   cudaEventDestroy(start);
   cudaEventDestroy(stop);
 }
+

@@ -14,9 +14,9 @@ void runblockTiling1d(float *A, float *B, float *C, uint m, uint n, uint k);
 int main() {
     printf("=== GEMM Benchmark ===\n");
 
-    uint m = 512 * 4; // Number of rows in A and C
-    uint n = 512 * 4; // Number of columns in B and C
-    uint k = 512 * 4; // Number of columns in A and rows in B
+    uint m = 1024 * 4; // Number of rows in A and C
+    uint n = 1024 * 4; // Number of columns in B and C
+    uint k = 1024 * 4; // Number of columns in A and rows in B
     float *A = (float *)malloc(sizeof(float) * m * k);
     float *B = (float *)malloc(sizeof(float) * k * n);
     float *C = (float *)malloc(sizeof(float) * m * n);
