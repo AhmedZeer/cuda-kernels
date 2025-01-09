@@ -86,10 +86,7 @@ void runSMEMCaching(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   printf("Performance (TFLOPS): %f\n", tflops);
 
   // Clean up
-  free(h_A);
-  free(h_B);
   free(h_C);
-  free(h_C_ref);
   cudaFree(d_A);
   cudaFree(d_B);
   cudaFree(d_C);

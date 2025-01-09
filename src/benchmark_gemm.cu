@@ -29,11 +29,12 @@ int main() {
 
   printf("\nBenchmarking Naive Coalescing GEMM...\n");
   runNaiveCoalescingGEMM(A, B, C, m, n, k);
-  /*
-   */
 
   printf("\nBenchmarking SMEM Caching GEMM...\n");
   runSMEMCaching(A, B, C, m, n, k);
 
+  free(A);
+  free(B);
+  free(C);
   return 0;
 }

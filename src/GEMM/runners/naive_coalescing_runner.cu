@@ -8,11 +8,12 @@ typedef unsigned int uint;
 #define UINT_DEFINED
 #endif
 
-extern __global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m, uint n,
-                                            uint k, float alpha, float beta);
+extern __global__ void naiveCoalescingGEMM(float *A, float *B, float *C, uint m,
+                                           uint n, uint k, float alpha,
+                                           float beta);
 
-void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
-                    uint k) {
+void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m,
+                            uint n, uint k) {
   // Host matrices
   float *h_C;
   float alpha = 1.0f, beta = 0.0f;
@@ -42,7 +43,8 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
-    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
+                                               beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
 
@@ -56,7 +58,8 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
-    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+    naiveCoalescingGEMM<<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha,
+                                               beta);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
@@ -86,10 +89,7 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m, uint
   printf("Performance (TFLOPS): %f\n", tflops);
 
   // Clean up
-  free(h_A);
-  free(h_B);
   free(h_C);
-  free(h_C_ref);
   cudaFree(d_A);
   cudaFree(d_B);
   cudaFree(d_C);
