@@ -3,7 +3,11 @@
 #include "../kernels/SMEMCaching.cuh"
 #include <stdio.h>
 
-typedef unsigned int uint; // Ensure 'uint' is defined if not in common.cuh
+// Define 'uint' if not defined in common.cuh
+#ifndef UINT_DEFINED
+typedef unsigned int uint;
+#define UINT_DEFINED
+#endif
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
@@ -12,7 +16,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
   float alpha = 1.0f, beta = 0.0f;
-  const uint BLOCK_SIZE = 32;
+  const uint BLOCK_SIZE = 16; // Adjusted to 16 for better occupancy
 
   // Allocate host memory
   h_A = (float *)malloc(size_A);
@@ -23,10 +27,6 @@ void runSMEMCaching(uint m, uint n, uint k) {
   // Initialize matrices
   initRandMatrix(h_A, m, k);
   initRandMatrix(h_B, k, n);
-
-  // Initialize h_C and h_C_ref to zero
-  memset(h_C, 0, size_C);
-  memset(h_C_ref, 0, size_C);
 
   // Perform CPU matrix multiplication for reference
   cpuMatmul(h_A, h_B, h_C_ref, m, n, k);
@@ -43,9 +43,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 1024 threads per block
-  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
-               (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
+  dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE); // 16x16 threads per block
+  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
@@ -86,8 +85,8 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   // Print performance metrics
   float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
-  float flop = 2.0f * m * n * k;           // FLOP for matrix multiplication
-  float tflops = flop / (seconds * 1e12f); // TFLOPS
+  float flop = 2.0f * m * n * k;                 // FLOP for matrix multiplication
+  float tflops = flop / (seconds * 1e12f);       // TFLOPS
   float bandwidth = (size_A + size_B + size_C) / 1e9f / seconds; // GB/s
 
   printf("Kernel average execution time (ms): %f\n", averageMilliseconds);
