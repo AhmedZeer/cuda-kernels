@@ -1,4 +1,7 @@
 #include "util.cuh"
+#include <cstdlib>
+
+srand(0);
 
 void initRandMatrix(float *A, int m, int n) {
   for (int i = 0; i < m; i++) {
