@@ -4,6 +4,7 @@
 // Declare function prototypes for each kernel runner
 void runNaiveGEMM(uint m, uint n, uint k);
 void runNaiveCoalescingGEMM(uint m, uint n, uint k);
+void runSMEMCaching(uint m, uint n, uint k);
 
 int main() {
   uint m = 1024; // Number of rows in A and C
@@ -17,6 +18,9 @@ int main() {
 
   printf("\nBenchmarking Naive Coalescing GEMM...\n");
   runNaiveCoalescingGEMM(m, n, k);
+
+  printf("\n Benchmarking SMEM Caching GEMM...\n");
+  runSMEMCaching(m, n, k);
 
   return 0;
 }

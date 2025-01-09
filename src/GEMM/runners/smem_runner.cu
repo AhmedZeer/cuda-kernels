@@ -1,6 +1,6 @@
 #include "../../utils/util.cuh"
-#include "../headers/SMEMCaching.cuh" // Include the kernel header
 #include "../headers/common.cuh"
+#include "../kernels/SMEMCaching.cuh"
 #include <stdio.h>
 
 void runSMEMCaching(uint m, uint n, uint k) {
