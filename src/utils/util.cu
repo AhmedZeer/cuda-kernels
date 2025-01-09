@@ -1,5 +1,6 @@
 #include "util.cuh"
 #include <cstdlib>
+#include <math.h>
 
 void initRandMatrix(float *A, int m, int n) {
   for (int i = 0; i < m; i++) {
@@ -31,37 +32,26 @@ void cpuMatmul(float *A, float *B, float *C, int m, int n, int k) {
 }
 
 float maxDifferenceBetweenMatrices(float *A, float *B, int m, int n) {
-  int i = 0, j = 0;
   float maxDiff = 0.0f;
 
-  while (i < m) {
-    j = 0;
-    while (j < n) {
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
       float diff = fabs(A[i * n + j] - B[i * n + j]);
       if (diff > maxDiff) {
         maxDiff = diff;
       }
-      j++;
     }
-    i++;
   }
 
   return maxDiff;
 }
 
-
 bool validateMatrices(float *A, float *B, int m, int n, float epsilon) {
-  int i = 0, j = 0;
-  bool eq = true;
-
-  while (i < m && eq) {
-    j = 0;
-    while (j < n && eq) {
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
       if (A[i * n + j] - B[i * n + j] > epsilon)
-        eq = false;
-      j++;
+        return false;
     }
-    i++;
   }
-  return eq;
+  return true;
 }

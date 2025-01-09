@@ -1,6 +1,6 @@
 __global__ void naiveGEMM(float *A, float *B, float *C, uint m, uint n, uint k,
                           float alpha, float beta) {
-  int threadRow = blockDim.x * blockIdx.y + threadIdx.y;
+  int threadRow = blockDim.y * blockIdx.y + threadIdx.y;
   int threadCol = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (threadRow < m && threadCol < n) {
