@@ -3,13 +3,15 @@
 #include "../kernels/SMEMCaching.cuh"
 #include <stdio.h>
 
+typedef unsigned int uint; // Ensure 'uint' is defined if not in common.cuh
+
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
   float *h_A, *h_B, *h_C, *h_C_ref;
   size_t size_A = m * k * sizeof(float);
   size_t size_B = k * n * sizeof(float);
   size_t size_C = m * n * sizeof(float);
-  float alpha = 1, beta = 0;
+  float alpha = 1.0f, beta = 0.0f;
   const uint BLOCK_SIZE = 32;
 
   // Allocate host memory
@@ -21,6 +23,10 @@ void runSMEMCaching(uint m, uint n, uint k) {
   // Initialize matrices
   initRandMatrix(h_A, m, k);
   initRandMatrix(h_B, k, n);
+
+  // Initialize h_C and h_C_ref to zero
+  memset(h_C, 0, size_C);
+  memset(h_C_ref, 0, size_C);
 
   // Perform CPU matrix multiplication for reference
   cpuMatmul(h_A, h_B, h_C_ref, m, n, k);
@@ -34,10 +40,12 @@ void runSMEMCaching(uint m, uint n, uint k) {
   // Copy data to device
   cudaMemcpy(d_A, h_A, size_A, cudaMemcpyHostToDevice);
   cudaMemcpy(d_B, h_B, size_B, cudaMemcpyHostToDevice);
+  cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 16x16 threads per block
-  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
+  dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 1024 threads per block
+  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
+               (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
@@ -48,7 +56,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
 
   // Benchmark loop
   int numRuns = 3;
-  float totalMilliseconds = 0;
+  float totalMilliseconds = 0.0f;
 
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
@@ -61,7 +69,7 @@ void runSMEMCaching(uint m, uint n, uint k) {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
-    float milliseconds = 0;
+    float milliseconds = 0.0f;
     cudaEventElapsedTime(&milliseconds, start, stop);
     totalMilliseconds += milliseconds;
   }
@@ -73,18 +81,18 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
 
   // Validate the result
-  bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4);
+  bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
   printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
   // Print performance metrics
-  float seconds = averageMilliseconds / 1000.0; // Convert to seconds
-  float flop = 2.0 * m * n * k;           // FLOP for matrix multiplication
-  float tflops = flop / (seconds * 1e12); // TFLOPS
-  float bandwidth = (size_A + size_B + size_C) / 1e9 / seconds; // GB/s
+  float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
+  float flop = 2.0f * m * n * k;           // FLOP for matrix multiplication
+  float tflops = flop / (seconds * 1e12f); // TFLOPS
+  float bandwidth = (size_A + size_B + size_C) / 1e9f / seconds; // GB/s
 
-  printf("Kernel average execution time (ms): %f \n", averageMilliseconds);
-  printf("Effective Bandwidth (GB/s): %f \n", bandwidth);
-  printf("Performance (TFLOPS): %f \n", tflops);
+  printf("Kernel average execution time (ms): %f\n", averageMilliseconds);
+  printf("Effective Bandwidth (GB/s): %f\n", bandwidth);
+  printf("Performance (TFLOPS): %f\n", tflops);
 
   // Clean up
   free(h_A);
@@ -97,3 +105,4 @@ void runSMEMCaching(uint m, uint n, uint k) {
   cudaEventDestroy(start);
   cudaEventDestroy(stop);
 }
+
