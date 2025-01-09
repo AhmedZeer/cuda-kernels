@@ -17,7 +17,7 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
 
   const uint BM = 64;
   const uint BN = 64;
-  const uint BK = 64;
+  const uint BK = 8;
   const uint TM = 8;
 
   const uint BLOCK_SIZE = (BM * BN) / TM; // Adjusted to 16 for better occupancy
@@ -41,8 +41,8 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
 
   // Define grid and block dimensions
   dim3 blockDim(BLOCK_SIZE * BLOCK_SIZE); // 16x16 threads per block
-  dim3 gridDim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
-               (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
+  dim3 gridDim((BN + n - 1) / BN,
+               (BM + m - 1) / BM);
 
   // Warmup loop
   for (int i = 0; i < 2; ++i) {
