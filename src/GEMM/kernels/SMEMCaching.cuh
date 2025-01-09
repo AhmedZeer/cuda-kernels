@@ -7,17 +7,18 @@ __global__ void SMEMCaching(float *A, float *B, float *C, uint m, uint n,
   uint cRow = blockIdx.y * BLOCKSIZE + threadIdx.y;
   uint cCol = blockIdx.x * BLOCKSIZE + threadIdx.x;
 
+  uint threadRow = threadIdx.x;
+  uint threadCol = threadIdx.y;
+
   float sum = 0.0f;
 
-  __shared__ float As[BLOCKSIZE][BLOCKSIZE];
-  __shared__ float Bs[BLOCKSIZE][BLOCKSIZE];
+  __shared__ As[BLOCKSIZE * BLOCKSIZE];
+  __shared__ Bs[BLOCKSIZE * BLOCKSIZE];
 
   for (int blkIdx = 0; blkIdx < (k + BLOCKSIZE - 1) / BLOCKSIZE; blkIdx++) {
 
-      As[threadIdx.y][threadIdx.x] =
-          A[cRow * k + blkIdx * BLOCKSIZE + threadIdx.x];
-      Bs[threadIdx.y][threadIdx.x] =
-          B[(blkIdx * BLOCKSIZE + threadIdx.y) * n + cCol];
+    As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * k + threadCol];
+    Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * k + threadCol];
 
     __syncthreads();
 
