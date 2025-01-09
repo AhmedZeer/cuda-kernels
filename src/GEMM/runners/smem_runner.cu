@@ -4,9 +4,9 @@
 
 // Kernel declaration from naive.cu
 template <>
-__global__ void SMEMCaching<const uint>(float *A, float *B, float *C, uint m,
-                                        uint n, uint k, float alpha,
-                                        float beta);
+extern __global__ void SMEMCaching<uint>(float *A, float *B, float *C, uint m,
+                                         uint n, uint k, float alpha,
+                                         float beta);
 
 void runSMEMCaching(uint m, uint n, uint k) {
   // Host matrices
