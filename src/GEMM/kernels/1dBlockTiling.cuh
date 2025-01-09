@@ -27,8 +27,8 @@ __global__ void blockTiling1d(float *A, float *B, float *C, int m, int n, int k,
     }
 
     // B is loaded in column-major format for the B matrix
-    if (innerRowA < BK && threadCol < BN && blkIdx + threadRow < k) {
-      Bs[innerRowA][threadCol] = B[(blkIdx + innerRowA) * n + threadCol];
+    if (threadRow < BK && threadCol < BN && blkIdx + threadRow < k) {
+      Bs[threadRow][threadCol] = B[(blkIdx + threadRow) * n + threadCol];
     }
 
     __syncthreads();

@@ -26,12 +26,15 @@ OBJECTS = $(SOURCES:.cu=.o)
 # Include paths
 INCLUDES = -I$(GEMM_HEADERS) -I$(UTILS)
 
+# CUDA library paths (if needed, specify path where CUDA is installed)
+LIBRARY_PATHS = -L/usr/local/cuda/lib64
+
 # Default target
 all: $(OUTPUT)
 
 # Build the executable
 $(OUTPUT): $(OBJECTS)
-	$(NVCC) $(CFLAGS) $(OBJECTS) -o $@
+	$(NVCC) $(CFLAGS) $(OBJECTS) $(LIBRARY_PATHS) -lcublas -o $@
 
 # Compile CUDA and C source files into object files
 %.o: %.cu
@@ -43,3 +46,5 @@ clean:
 
 # Phony targets
 .PHONY: all clean
+
+
