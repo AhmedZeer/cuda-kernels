@@ -30,6 +30,26 @@ void cpuMatmul(float *A, float *B, float *C, int m, int n, int k) {
   }
 }
 
+float maxDifferenceBetweenMatrices(float *A, float *B, int m, int n) {
+  int i = 0, j = 0;
+  float maxDiff = 0.0f;
+
+  while (i < m) {
+    j = 0;
+    while (j < n) {
+      float diff = fabs(A[i * n + j] - B[i * n + j]);
+      if (diff > maxDiff) {
+        maxDiff = diff;
+      }
+      j++;
+    }
+    i++;
+  }
+
+  return maxDiff;
+}
+
+
 bool validateMatrices(float *A, float *B, int m, int n, float epsilon) {
   int i = 0, j = 0;
   bool eq = true;

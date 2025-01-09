@@ -78,6 +78,9 @@ void runNaiveCoalescingGEMM(float *h_A, float *h_B, float *h_C_ref, uint m,
   bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
   printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
+  float maxDiff = maxDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
+  printf("Max Diff: %f\n", maxDiff);
+
   // Print performance metrics
   float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
   float flop = 2.0f * m * n * k;           // FLOP for matrix multiplication
