@@ -1,2 +1,5 @@
 *.o
 *.out
+# Ignore files without extensions
+*.
+
