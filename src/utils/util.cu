@@ -1,6 +1,7 @@
 #include "util.cuh"
 #include <cstdlib>
 #include <math.h>
+#include <iostream>
 
 void initRandMatrix(float *A, int m, int n) {
   for (int i = 0; i < m; i++) {
@@ -71,4 +72,16 @@ float minDifferenceBetweenMatrices(float *A, float *B, int m, int n) {
   }
 
   return maxDiff;
+}
+
+void cppVerifier(float *h_C, float *h_C_ref, int m, int n) {
+  const float epsilon = 1e-3f;
+  int wrong = 0;
+  for(int i = 0; i < m * n; ++i){
+      if(abs(h_C[i] - h_C_ref[i]) > epsilon){
+          // std::cerr << "Mismatch at index " << i << ": GPU " << h_C[i] << " vs CPU " << h_C_ref[i] << std::endl;
+          wrong++;
+      }
+  }
+  std::cerr << "Total Mismatched: " << wrong << std::endl;
 }

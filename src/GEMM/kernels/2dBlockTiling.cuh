@@ -1,10 +1,14 @@
+// blockTiling2d.cuh
+
 template<int BM, int BN, int BK, int TM, int TN>
-__global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k, float alpha, float beta){
+__global__ void blockTiling2d(const float* __restrict__ A, const float* __restrict__ B, float* C, int m, int n, int k, float alpha, float beta){
 
-    // Calculate total tiles and threads per tile
-    int totalTiles = BM * BN;
-    int threadsPerTile = totalTiles / (TM * TN);
-
+    
+    int tileSize = BM * BN;
+    int threadPerTile = tileSize / (TM*TN);
+    int strideA = threadPerTile / BK;
+    int strideB = threadPerTile / BN;
+ 
     // Determine the block's position in the grid
     int cCol = blockIdx.x;
     int cRow = blockIdx.y;
@@ -16,19 +20,14 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k,
     // Calculate indices for loading A and B
     int innerColA = threadIdx.x % BK; // 0..7 for BK=8
     int innerRowA = threadIdx.x / BK; // 0..7 for blockDim.x=64, BK=8
-
-    // For B, since Bs has BK=8 rows, we adjust the loop to prevent out-of-bounds
-    // No need for innerRowB as it would always be 0 with blockDim.x=64 and BN=64
-    // Thus, innerRowB is effectively 0
-    // Remove innerRowB and adjust the loading loop accordingly
-
-    int strideA = threadsPerTile / BK; // 64 / 8 = 8
-    int strideB = threadsPerTile / BK; // Adjusted to 8 for correct loading
+    
+    int innerColB = threadIdx.x % BN;
+    int innerRowB = threadIdx.x / BN;
 
     // Offset the pointers to the starting positions for this block
-    A += cRow * BM * k;
-    B += cCol * BN;
-    C += cCol * BN + cRow * BM * n;
+    const float* A_block = A + cRow * BM * k;
+    const float* B_block = B + cCol * BN;
+    float* C_block = C + cRow * BM * n + cCol * BN;
 
     // Declare shared memory for tiles of A and B
     __shared__ float As[BM][BK]; // [64][8]
@@ -39,56 +38,21 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k,
     float regM[TM];
     float regN[TN];
 
-    // Initialize threadResults to zero
-    for(int resIdxM = 0; resIdxM < TM; resIdxM++){
-        for(int resIdxN = 0; resIdxN < TN; resIdxN++){
-            threadResults[resIdxM][resIdxN] = 0.0f;
-        }
-    }
 
     // Iterate over all tiles in the K dimension
     for(int blkIdx = 0; blkIdx < k; blkIdx += BK){
 
-        // Load a tile of A into shared memory
         for(int i = 0; i < BM; i += strideA){
             int rowA = innerRowA + i;
-            if(rowA < BM && (blkIdx + innerColA) < k){
-                As[rowA][innerColA] = A[rowA * k + blkIdx + innerColA];
-            }
-            else{
-                As[rowA][innerColA] = 0.0f; // Handle out-of-bounds by setting to zero
-            }
+            As[rowA][innerColA] = A_block[rowA * k + blkIdx + innerColA];
         }
 
-        // Load a tile of B into shared memory
         for(int i = 0; i < BK; i += strideB){
-            if(i < BK && (blkIdx + i) < k){
-                Bs[i][threadCol * TN + 0] = B[(blkIdx + i) * n + threadCol * TN + 0];
-                // If TN > 1, you may need to load multiple elements per thread
-                // For simplicity, assuming TN=8 and each thread loads TN elements
-                for(int tn = 1; tn < TN; tn++){
-                    if((threadCol * TN + tn) < BN){
-                        Bs[i][threadCol * TN + tn] = B[(blkIdx + i) * n + threadCol * TN + tn];
-                    }
-                    else{
-                        Bs[i][threadCol * TN + tn] = 0.0f; // Handle out-of-bounds
-                    }
-                }
-            }
-            else{
-                // Handle out-of-bounds by setting to zero
-                Bs[i][threadCol * TN + 0] = 0.0f;
-                for(int tn = 1; tn < TN; tn++){
-                    Bs[i][threadCol * TN + tn] = 0.0f;
-                }
-            }
+            int rowB = innerRowB + i;
+            Bs[rowB][innerColB] = B_block[(blkIdx + rowB) * n + innerColB];
         }
 
         __syncthreads(); // Ensure all data is loaded into shared memory
-
-        // Move pointers to the next tile in K dimension
-        A += BK;
-        B += BK * n;
 
         // Perform the multiplication for the loaded tiles
         for(int i = 0; i < BK; i++){
@@ -112,17 +76,12 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k,
         __syncthreads(); // Ensure all threads have finished using shared memory
     }
 
-    // Write the accumulated results back to matrix C with boundary checks
     for(int resIdxM = 0; resIdxM < TM ; resIdxM++){
         for(int resIdxN = 0; resIdxN < TN; resIdxN++){
-            int globalRow = cRow * BM + threadRow * TM + resIdxM;
-            int globalCol = cCol * BN + threadCol * TN + resIdxN;
+            int localRow = threadRow * TM + resIdxM;
+            int localCol = threadCol * TN + resIdxN;
 
-            // Boundary check to prevent out-of-bounds access
-            if(globalRow < m && globalCol < n){
-                // Incorporate alpha and beta
-                C[globalRow * n + globalCol] = alpha * threadResults[resIdxM][resIdxN] + beta * C[globalRow * n + globalCol];
-            }
+            C_block[localRow * n + localCol] = alpha * threadResults[resIdxM][resIdxN] + beta * C_block[localRow * n + localCol];
         }
     }
 }

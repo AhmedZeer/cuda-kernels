@@ -58,6 +58,10 @@ int main() {
   // Copy result from device to host
   cudaMemcpy(C, d_C, sizeof(float) * m * n, cudaMemcpyDeviceToHost);
 
+  /*
+  printf("Calculating CPU...\n");
+  cpuMatmul(A, B, C, m, n, k);
+
   printf("Benchmarking Naive GEMM...\n");
   runNaiveGEMM(A, B, C, m, n, k);
 
@@ -69,6 +73,7 @@ int main() {
 
   printf("\nBenchmarking 1D Block Tiling Caching GEMM...\n");
   runblockTiling1d(A, B, C, m, n, k);
+  */
 
   printf("\nBenchmarking 2D Block Tiling Caching GEMM...\n");
   runblockTiling2d(A, B, C, m, n, k);

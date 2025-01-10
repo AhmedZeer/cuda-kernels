@@ -27,14 +27,15 @@ void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
     float *h_C;
     float alpha = 1.0f, beta = 0.0f;
 
+    // Updated tiling parameters
     const uint BM = 64;
     const uint BN = 64;
-    const uint BK = 2;
-    const uint TM = 2;
-    const uint TN = 2;
+    const uint BK = 8;  // Updated from 2 to 8
+    const uint TM = 8;  // Updated from 2 to 8
+    const uint TN = 8;  // Updated from 2 to 8
 
     // Calculate BLOCK_SIZE based on tiling parameters
-    const uint BLOCK_SIZE = (BM * BN) / (TM * TN); // (64 * 64) / (8 * 8) = 64
+    const uint BLOCK_SIZE = (BM * BN) / (TM * TN);
 
     size_t size_A = m * k * sizeof(float);
     size_t size_B = k * n * sizeof(float);
@@ -65,15 +66,12 @@ void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
     dim3 gridDim((n + BN - 1) / BN, (m + BM - 1) / BM);
 
     // Warmup loop
+
     for (int i = 0; i < 10; ++i) {
         blockTiling2d<BM, BN, BK, TM, TN>
             <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
-        // Check for kernel launch errors
         CUDA_CHECK_ERROR(cudaGetLastError());
     }
-    // Synchronize with error checking
-    CUDA_CHECK_ERROR(cudaDeviceSynchronize());
-    printf("\nWarmup Done.\n");
 
     // Benchmark loop
     int numRuns = 10;
@@ -86,17 +84,16 @@ void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
     for (int i = 0; i < numRuns; ++i) {
         CUDA_CHECK_ERROR(cudaEventRecord(start));
 
-        printf("\nBefore kernel Run (%d)\n", i);
 
         blockTiling2d<BM, BN, BK, TM, TN>
             <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
         
         // Check for kernel launch errors
         CUDA_CHECK_ERROR(cudaGetLastError());
+        CUDA_CHECK_ERROR(cudaDeviceSynchronize());
 
         CUDA_CHECK_ERROR(cudaEventRecord(stop));
         CUDA_CHECK_ERROR(cudaEventSynchronize(stop));
-        printf("\nAfter kernel Run (%d)\n", i);
 
         float milliseconds = 0.0f;
         CUDA_CHECK_ERROR(cudaEventElapsedTime(&milliseconds, start, stop));
@@ -118,6 +115,8 @@ void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
 
     float minDiff = minDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
     printf("Min Diff: %f\n", minDiff);
+    
+    cppVerifier(h_C, h_C_ref, m, n);
 
     // Print performance metrics
     float seconds = averageMilliseconds / 1000.0f; // Convert to seconds

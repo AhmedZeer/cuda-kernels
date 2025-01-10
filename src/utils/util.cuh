@@ -9,3 +9,4 @@ void cpuMatmul(float *A, float *B, float *C, int m, int n, int k);
 bool validateMatrices(float *A, float *B, int m, int n, float epsilon);
 float maxDifferenceBetweenMatrices(float *A, float *B, int m, int n);
 float minDifferenceBetweenMatrices(float *A, float *B, int m, int n);
+void cppVerifier(float *A, float *B, int m, int n);

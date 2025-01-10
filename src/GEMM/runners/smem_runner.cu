@@ -88,6 +88,7 @@ void runSMEMCaching(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   printf("Effective Bandwidth (GB/s): %f\n", bandwidth);
   printf("Performance (TFLOPS): %f\n", tflops);
 
+  cudaDeviceReset();
   // Clean up
   free(h_C);
   cudaFree(d_A);
