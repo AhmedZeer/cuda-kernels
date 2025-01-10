@@ -2,6 +2,7 @@
 #include "../headers/common.cuh"
 #include "../kernels/2dBlockTiling.cuh"
 #include <stdio.h>
+#include <cuda_runtime.h> // Ensure you include the CUDA runtime header
 
 // Define 'uint' if not defined in common.cuh
 #ifndef UINT_DEFINED
@@ -9,106 +10,131 @@ typedef unsigned int uint;
 #define UINT_DEFINED
 #endif
 
+// CUDA error checking macro
+#define CUDA_CHECK_ERROR(call)                                         \
+    do {                                                               \
+        cudaError_t err = call;                                        \
+        if (err != cudaSuccess) {                                      \
+            fprintf(stderr, "CUDA error at %s:%d - %s\n",              \
+                    __FILE__, __LINE__, cudaGetErrorString(err));      \
+            exit(EXIT_FAILURE);                                        \
+        }                                                              \
+    } while (0)
+
 void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
                       uint k) {
-  // Host matrices
-  float *h_C;
-  float alpha = 1.0f, beta = 0.0f;
+    // Host matrices
+    float *h_C;
+    float alpha = 1.0f, beta = 0.0f;
 
-  const uint BM = 64;
-  const uint BN = 64;
-  const uint BK = 8;
-  const uint TM = 8;
-  const uint TN = 8;
+    const uint BM = 64;
+    const uint BN = 64;
+    const uint BK = 2;
+    const uint TM = 2;
+    const uint TN = 2;
 
-  // const uint BLOCK_SIZE = 32;
-  const uint BLOCK_SIZE = (BM * BN) / (TM * TN);
+    // Calculate BLOCK_SIZE based on tiling parameters
+    const uint BLOCK_SIZE = (BM * BN) / (TM * TN); // (64 * 64) / (8 * 8) = 64
 
-  size_t size_A = m * k * sizeof(float);
-  size_t size_B = k * n * sizeof(float);
-  size_t size_C = m * n * sizeof(float);
+    size_t size_A = m * k * sizeof(float);
+    size_t size_B = k * n * sizeof(float);
+    size_t size_C = m * n * sizeof(float);
 
-  h_C = (float *)malloc(size_C);
+    // Allocate host memory for C
+    h_C = (float *)malloc(size_C);
+    if (h_C == NULL) {
+        fprintf(stderr, "Failed to allocate host memory for h_C\n");
+        exit(EXIT_FAILURE);
+    }
 
-  // Device matrices
-  float *d_A, *d_B, *d_C;
-  cudaMalloc((void **)&d_A, size_A);
-  cudaMalloc((void **)&d_B, size_B);
-  cudaMalloc((void **)&d_C, size_C);
+    // Device matrices
+    float *d_A, *d_B, *d_C;
 
-  // Copy data to device
-  cudaMemcpy(d_A, h_A, size_A, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, h_B, size_B, cudaMemcpyHostToDevice);
-  cudaMemset(d_C, 0, size_C); // Initialize device C to zero
+    // Allocate device memory with error checking
+    CUDA_CHECK_ERROR(cudaMalloc((void **)&d_A, size_A));
+    CUDA_CHECK_ERROR(cudaMalloc((void **)&d_B, size_B));
+    CUDA_CHECK_ERROR(cudaMalloc((void **)&d_C, size_C));
 
-  // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE); 
-  dim3 gridDim((n + BN - 1) / BN, (m + BM - 1) / BM);
+    // Copy data to device with error checking
+    CUDA_CHECK_ERROR(cudaMemcpy(d_A, h_A, size_A, cudaMemcpyHostToDevice));
+    CUDA_CHECK_ERROR(cudaMemcpy(d_B, h_B, size_B, cudaMemcpyHostToDevice));
+    CUDA_CHECK_ERROR(cudaMemset(d_C, 0, size_C)); // Initialize device C to zero
 
-  // Warmup loop
-  for (int i = 0; i < 10; ++i) {
-    blockTiling2d<BM, BN, BK, TM, TN>
-        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
-  }
-  cudaDeviceSynchronize(); // Ensure all operations are finished
-  printf("\nWarmup. Done.\n");
+    // Define grid and block dimensions
+    dim3 blockDim(BLOCK_SIZE);
+    dim3 gridDim((n + BN - 1) / BN, (m + BM - 1) / BM);
 
-  // Benchmark loop
-  int numRuns = 10;
-  float totalMilliseconds = 0.0f;
+    // Warmup loop
+    for (int i = 0; i < 10; ++i) {
+        blockTiling2d<BM, BN, BK, TM, TN>
+            <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+        // Check for kernel launch errors
+        CUDA_CHECK_ERROR(cudaGetLastError());
+    }
+    // Synchronize with error checking
+    CUDA_CHECK_ERROR(cudaDeviceSynchronize());
+    printf("\nWarmup Done.\n");
 
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+    // Benchmark loop
+    int numRuns = 10;
+    float totalMilliseconds = 0.0f;
 
-  for (int i = 0; i < numRuns; ++i) {
-    cudaEventRecord(start);
+    cudaEvent_t start, stop;
+    CUDA_CHECK_ERROR(cudaEventCreate(&start));
+    CUDA_CHECK_ERROR(cudaEventCreate(&stop));
 
-    printf("\nBefire kernel Runs (%d)\n", i);
+    for (int i = 0; i < numRuns; ++i) {
+        CUDA_CHECK_ERROR(cudaEventRecord(start));
 
-    blockTiling2d<BM, BN, BK, TM, TN>
-        <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+        printf("\nBefore kernel Run (%d)\n", i);
 
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    printf("\nAfter kernel Runs (%d)\n", i);
+        blockTiling2d<BM, BN, BK, TM, TN>
+            <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+        
+        // Check for kernel launch errors
+        CUDA_CHECK_ERROR(cudaGetLastError());
 
-    float milliseconds = 0.0f;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    totalMilliseconds += milliseconds;
-  }
+        CUDA_CHECK_ERROR(cudaEventRecord(stop));
+        CUDA_CHECK_ERROR(cudaEventSynchronize(stop));
+        printf("\nAfter kernel Run (%d)\n", i);
 
-  // Compute average execution time
-  float averageMilliseconds = totalMilliseconds / numRuns;
+        float milliseconds = 0.0f;
+        CUDA_CHECK_ERROR(cudaEventElapsedTime(&milliseconds, start, stop));
+        totalMilliseconds += milliseconds;
+    }
 
-  // Copy result back to host
-  cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost);
+    // Compute average execution time
+    float averageMilliseconds = totalMilliseconds / numRuns;
 
-  // Validate the result
-  bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
-  printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
+    // Copy result back to host with error checking
+    CUDA_CHECK_ERROR(cudaMemcpy(h_C, d_C, size_C, cudaMemcpyDeviceToHost));
 
-  float maxDiff = maxDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
-  printf("Max Diff: %f\n", maxDiff);
+    // Validate the result
+    bool isValid = validateMatrices(h_C, h_C_ref, m, n, 1e-4f);
+    printf("Validation: %s\n", isValid ? "SUCCESS" : "FAILURE");
 
-  float minDiff = minDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
-  printf("Min Diff: %f\n", minDiff);
+    float maxDiff = maxDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
+    printf("Max Diff: %f\n", maxDiff);
 
-  // Print performance metrics
-  float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
-  float flop = 2.0f * m * n * k;           // FLOP for matrix multiplication
-  float tflops = flop / (seconds * 1e12f); // TFLOPS
-  float bandwidth = (size_A + size_B + size_C) / 1e9f / seconds; // GB/s
+    float minDiff = minDifferenceBetweenMatrices(h_C, h_C_ref, m, n);
+    printf("Min Diff: %f\n", minDiff);
 
-  printf("Kernel average execution time (ms): %f\n", averageMilliseconds);
-  printf("Effective Bandwidth (GB/s): %f\n", bandwidth);
-  printf("Performance (TFLOPS): %f\n", tflops);
+    // Print performance metrics
+    float seconds = averageMilliseconds / 1000.0f; // Convert to seconds
+    float flop = 2.0f * m * n * k;                  // FLOP for matrix multiplication
+    float tflops = flop / (seconds * 1e12f);        // TFLOPS
+    float bandwidth = (size_A + size_B + size_C) / 1e9f / seconds; // GB/s
 
-  // Clean up
-  free(h_C);
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+    printf("Kernel average execution time (ms): %f\n", averageMilliseconds);
+    printf("Effective Bandwidth (GB/s): %f\n", bandwidth);
+    printf("Performance (TFLOPS): %f\n", tflops);
+
+    // Clean up
+    free(h_C);
+    CUDA_CHECK_ERROR(cudaFree(d_A));
+    CUDA_CHECK_ERROR(cudaFree(d_B));
+    CUDA_CHECK_ERROR(cudaFree(d_C));
+    CUDA_CHECK_ERROR(cudaEventDestroy(start));
+    CUDA_CHECK_ERROR(cudaEventDestroy(stop));
 }
+
