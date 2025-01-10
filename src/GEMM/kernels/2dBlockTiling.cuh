@@ -8,6 +8,7 @@ __global__ void blockTiling2d(const float* __restrict__ A, const float* __restri
     int threadPerTile = tileSize / (TM*TN);
     int strideA = threadPerTile / BK;
     int strideB = threadPerTile / BN;
+    // int strideB = 1;
  
     // Determine the block's position in the grid
     int cCol = blockIdx.x;
@@ -37,6 +38,12 @@ __global__ void blockTiling2d(const float* __restrict__ A, const float* __restri
     float threadResults[TM][TN];
     float regM[TM];
     float regN[TN];
+
+    for(int resIdxM = 0; resIdxM < TM; resIdxM++) {
+        for(int resIdxN = 0; resIdxN < TN; resIdxN++) {
+            threadResults[resIdxM][resIdxN] = 0.0f;
+        }
+    }
 
 
     // Iterate over all tiles in the K dimension
