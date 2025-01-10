@@ -15,9 +15,9 @@ void runblockTiling2d(float *A, float *B, float *C, uint m, uint n, uint k);
 int main() {
   printf("=== GEMM Benchmark ===\n");
 
-  uint m = 1024 * 1; // Number of rows in A and C
-  uint n = 1024 * 1; // Number of columns in B and C
-  uint k = 1024 * 1; // Number of columns in A and rows in B
+  uint m = 128 * 32; // Number of rows in A and C
+  uint n = 128 * 32; // Number of columns in B and C
+  uint k = 128 * 32; // Number of columns in A and rows in B
   float *A = (float *)malloc(sizeof(float) * m * k);
   float *B = (float *)malloc(sizeof(float) * k * n);
   float *C = (float *)malloc(sizeof(float) * m * n);
@@ -61,6 +61,7 @@ int main() {
   /*
   printf("Calculating CPU...\n");
   cpuMatmul(A, B, C, m, n, k);
+  */
 
   printf("Benchmarking Naive GEMM...\n");
   runNaiveGEMM(A, B, C, m, n, k);
@@ -73,7 +74,6 @@ int main() {
 
   printf("\nBenchmarking 1D Block Tiling Caching GEMM...\n");
   runblockTiling1d(A, B, C, m, n, k);
-  */
 
   printf("\nBenchmarking 2D Block Tiling Caching GEMM...\n");
   runblockTiling2d(A, B, C, m, n, k);

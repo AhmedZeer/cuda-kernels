@@ -1,0 +1,180 @@
+{
+  "experiments": [
+    {
+      "size": 256,
+      "results": [
+        {
+          "method": "Naive GEMM",
+          "average_execution_time_ms": 0.025600,
+          "effective_bandwidth_GBps": 30.720001,
+          "performance_TFLOPS": 1.310720
+        },
+        {
+          "method": "Naive Coalescing GEMM",
+          "average_execution_time_ms": 0.027307,
+          "effective_bandwidth_GBps": 28.799999,
+          "performance_TFLOPS": 1.228800
+        },
+        {
+          "method": "SMEM Caching GEMM",
+          "average_execution_time_ms": 0.017408,
+          "effective_bandwidth_GBps": 45.176472,
+          "performance_TFLOPS": 1.927529
+        },
+        {
+          "method": "1D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.047445,
+          "effective_bandwidth_GBps": 16.575539,
+          "performance_TFLOPS": 0.707223
+        },
+        {
+          "method": "2D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.048947,
+          "effective_bandwidth_GBps": 16.066944,
+          "performance_TFLOPS": 0.685523
+        }
+      ]
+    },
+    {
+      "size": 512,
+      "results": [
+        {
+          "method": "Naive GEMM",
+          "average_execution_time_ms": 0.124245,
+          "effective_bandwidth_GBps": 25.318682,
+          "performance_TFLOPS": 2.160527
+        },
+        {
+          "method": "Naive Coalescing GEMM",
+          "average_execution_time_ms": 0.133803,
+          "effective_bandwidth_GBps": 23.510204,
+          "performance_TFLOPS": 2.006204
+        },
+        {
+          "method": "SMEM Caching GEMM",
+          "average_execution_time_ms": 0.070315,
+          "effective_bandwidth_GBps": 44.737865,
+          "performance_TFLOPS": 3.817631
+        },
+        {
+          "method": "1D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.089088,
+          "effective_bandwidth_GBps": 35.310345,
+          "performance_TFLOPS": 3.013149
+        },
+        {
+          "method": "2D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.087245,
+          "effective_bandwidth_GBps": 36.056335,
+          "performance_TFLOPS": 3.076807
+        }
+      ]
+    },
+    {
+      "size": 1024,
+      "results": [
+        {
+          "method": "Naive GEMM",
+          "average_execution_time_ms": 0.788821,
+          "effective_bandwidth_GBps": 15.951538,
+          "performance_TFLOPS": 2.722396
+        },
+        {
+          "method": "Naive Coalescing GEMM",
+          "average_execution_time_ms": 0.850944,
+          "effective_bandwidth_GBps": 14.787004,
+          "performance_TFLOPS": 2.523649
+        },
+        {
+          "method": "SMEM Caching GEMM",
+          "average_execution_time_ms": 0.418816,
+          "effective_bandwidth_GBps": 30.044010,
+          "performance_TFLOPS": 5.127511
+        },
+        {
+          "method": "1D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.398677,
+          "effective_bandwidth_GBps": 31.561644,
+          "performance_TFLOPS": 5.386520
+        },
+        {
+          "method": "2D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 0.269312,
+          "effective_bandwidth_GBps": 46.722439,
+          "performance_TFLOPS": 7.973963
+        }
+      ]
+    },
+    {
+      "size": 2048,
+      "results": [
+        {
+          "method": "Naive GEMM",
+          "average_execution_time_ms": 5.970944,
+          "effective_bandwidth_GBps": 8.429429,
+          "performance_TFLOPS": 2.877245
+        },
+        {
+          "method": "Naive Coalescing GEMM",
+          "average_execution_time_ms": 6.445055,
+          "effective_bandwidth_GBps": 7.809343,
+          "performance_TFLOPS": 2.665589
+        },
+        {
+          "method": "SMEM Caching GEMM",
+          "average_execution_time_ms": 3.176790,
+          "effective_bandwidth_GBps": 15.843558,
+          "performance_TFLOPS": 5.407934
+        },
+        {
+          "method": "1D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 2.537131,
+          "effective_bandwidth_GBps": 19.838020,
+          "performance_TFLOPS": 6.771378
+        },
+        {
+          "method": "2D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 1.213952,
+          "effective_bandwidth_GBps": 41.460983,
+          "performance_TFLOPS": 14.152016
+        }
+      ]
+    },
+    {
+      "size": 4096,
+      "results": [
+        {
+          "method": "Naive GEMM",
+          "average_execution_time_ms": 51.416065,
+          "effective_bandwidth_GBps": 3.915636,
+          "performance_TFLOPS": 2.673074
+        },
+        {
+          "method": "Naive Coalescing GEMM",
+          "average_execution_time_ms": 53.652142,
+          "effective_bandwidth_GBps": 3.752443,
+          "performance_TFLOPS": 2.561668
+        },
+        {
+          "method": "SMEM Caching GEMM",
+          "average_execution_time_ms": 26.335571,
+          "effective_bandwidth_GBps": 7.644664,
+          "performance_TFLOPS": 5.218758
+        },
+        {
+          "method": "1D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 19.032064,
+          "effective_bandwidth_GBps": 10.578284,
+          "performance_TFLOPS": 7.221442
+        },
+        {
+          "method": "2D Block Tiling Caching GEMM",
+          "average_execution_time_ms": 9.056871,
+          "effective_bandwidth_GBps": 22.229155,
+          "performance_TFLOPS": 15.175102
+        }
+      ]
+    }
+  ]
+}
+
