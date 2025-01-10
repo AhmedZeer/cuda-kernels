@@ -6,7 +6,7 @@
 #include <chrono>
 // #include "blockTiling2d.cuh"
 // #include "tilingWorking.cuh"
-#include "isItWorking.cu"
+#include "isItWorking.cuh"
 
 // Define tiling and thread block parameters
 constexpr int BM = 64; // Block size in M dimension
