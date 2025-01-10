@@ -1,5 +1,5 @@
-template<int BM, int BN, int BK, int TM, int TN)
-__global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k){
+template<int BM, int BN, int BK, int TM, int TN>
+__global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k, float alpha, float beta){
 
   int totalTiles = BM * BN;
   int threadsPerTile = totalTiles / (TM*TN);
@@ -19,16 +19,16 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k)
   int strideA = threadsPerTile / BK;
   int strideB = threadsPerTile / BN;
 
-  A = cRow * BM * k;
-  B = cCol * BN;
-  C = cCol * BN + cRow * BM * n;
+  A += cRow * BM * k;
+  B += cCol * BN;
+  C += cCol * BN + cRow * BM * n;
 
-  __shared__ As[BM][BK];
-  __shared__ Bs[BK][BN];
+  __shared__ float As[BM][BK];
+  __shared__ float Bs[BK][BN];
   
   float threadResults[TM][TN];
   float regM[TM];
-  float regN[TN]
+  float regN[TN];
 
   for(int blkIdx = 0; blkIdx < k; blkIdx+=BK){
     
@@ -43,7 +43,7 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k)
     __syncthreads();
     
     A += BK;
-    B += BN * N;
+    B += BK * n;
     
     for(int i = 0; i < BK; i++){
       
@@ -66,7 +66,7 @@ __global__ void blockTiling2d(float* A, float *B, float *C, int m, int n, int k)
   
   for(int resIdxM = 0; resIdxM < TM ; resIdxM++){
     for(int resIdxN = 0; resIdxN < TN; resIdxN++){
-      C[threadRow * TM + resIdxM][threadCol * TN + resIdxN] = threadResults[resIdxM][resIdxN];
+      C[(threadRow * TM + resIdxM) * n +threadCol * TN + resIdxN] = threadResults[resIdxM][resIdxN];
     }
   }
 }

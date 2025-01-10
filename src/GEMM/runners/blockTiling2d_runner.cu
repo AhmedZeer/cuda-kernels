@@ -9,20 +9,20 @@ typedef unsigned int uint;
 #define UINT_DEFINED
 #endif
 
-void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
+void runblockTiling2d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
                       uint k) {
   // Host matrices
   float *h_C;
   float alpha = 1.0f, beta = 0.0f;
 
-  const uint BM = 128;
-  const uint BN = 128;
+  const uint BM = 64;
+  const uint BN = 64;
   const uint BK = 8;
   const uint TM = 8;
   const uint TN = 8;
 
   // const uint BLOCK_SIZE = 32;
-  const uint BLOCK_SIZE = BM * BN / TM;
+  const uint BLOCK_SIZE = (BM * BN) / (TM * TN);
 
   size_t size_A = m * k * sizeof(float);
   size_t size_B = k * n * sizeof(float);
@@ -42,7 +42,7 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
   cudaMemset(d_C, 0, size_C); // Initialize device C to zero
 
   // Define grid and block dimensions
-  dim3 blockDim(BLOCK_SIZE); // 16x16 = 256 threads per block
+  dim3 blockDim(BLOCK_SIZE); 
   dim3 gridDim((n + BN - 1) / BN, (m + BM - 1) / BM);
 
   // Warmup loop
@@ -51,6 +51,7 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
         <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
   }
   cudaDeviceSynchronize(); // Ensure all operations are finished
+  printf("\nWarmup. Done.\n");
 
   // Benchmark loop
   int numRuns = 10;
@@ -62,10 +63,15 @@ void runblockTiling1d(float *h_A, float *h_B, float *h_C_ref, uint m, uint n,
 
   for (int i = 0; i < numRuns; ++i) {
     cudaEventRecord(start);
+
+    printf("\nBefire kernel Runs (%d)\n", i);
+
     blockTiling2d<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(d_A, d_B, d_C, m, n, k, alpha, beta);
+
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
+    printf("\nAfter kernel Runs (%d)\n", i);
 
     float milliseconds = 0.0f;
     cudaEventElapsedTime(&milliseconds, start, stop);
