@@ -36,4 +36,61 @@ elementwise = load(name="elementwise",
                      "--use_fast_math",
                    ], extra_cflags=['-std=c++17'])
 
-def run_bench():
+def run_bench(kernel, a:torch.Tensor, b:torch.Tensor,
+              kernel_name:str, c:Optional[torch.Tensor]=None,
+              warmup:int=10, itr:int=1000, print_res:bool=False):
+
+    if c is not None:
+        c.zero_();
+        for _ in range(warmup):
+            kernel(a,b,c)
+    else:
+        for _ in range(warmup):
+            c = kernel(a,b)
+
+    torch.cuda.synchronize()
+
+    start = time.time()
+
+    if c is not None:
+        for _ in range(itr):
+            kernel(a,b,c)
+    else:
+        for _ in range(itr):
+            c = kernel(a,b)
+
+    torch.cuda.synchronize()
+    end = time.time()
+    duration = (end - start) * 1e3
+    vals = c.flatten().detach().numpy().tolist()[-2:]
+    vals = [round(val, 6) for val in vals]
+    print(f"out_{kernel_name}:", vals, "duration:", duration)
+    return c
+
+def main():
+    samples_nums = [1024, 2048, 4096]
+    features_nums = [1024, 2048, 4096]
+
+    print("-=" * 80)
+    for sample_num, feature_num in zip(samples_nums, features_nums):
+        print("Sample Num:", sample_num, "Feature Num:", feature_num)
+
+        a = torch.randn([sample_num, feature_num]).cuda().float()
+        b = torch.randn([sample_num, feature_num]).cuda().float()
+        c = torch.randn([sample_num, feature_num]).cuda().float()
+
+        run_bench(elementwise.element_wise_add_f32, a, b, "f32", c)
+        run_bench(elementwise.element_wise_add_f32x4, a, b, "f32x4", c)
+
+        print("=-" * 80)
+        a = torch.randn([sample_num, feature_num]).cuda().half()
+        b = torch.randn([sample_num, feature_num]).cuda().half()
+        c = torch.randn([sample_num, feature_num]).cuda().half()
+
+        run_bench(elementwise.element_wise_add_f16, a, b, "f16", c)
+        run_bench(elementwise.element_wise_add_f16x2, a, b, "f16x2", c)
+        run_bench(elementwise.element_wise_add_f16x8, a, b, "f16x8", c)
+        run_bench(elementwise.element_wise_add_f16x8_pack, a, b, "f16x8_pack", c)
+
+if __name__ == "__main__":
+    main()
