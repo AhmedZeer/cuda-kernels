@@ -213,3 +213,12 @@ BIND_ELM_ADD(f16, torch::Half, half, 1);
 BIND_ELM_ADD(f16x2, torch::Half, half, 2);
 BIND_ELM_ADD(f16x8, torch::Half, half, 8);
 BIND_ELM_ADD(f16x8_pack, torch::Half, half, 8);
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
+  PYTORCH_MODULE(element_wise_add_f32)
+  PYTORCH_MODULE(element_wise_add_f32x4)
+  PYTORCH_MODULE(element_wise_add_f16)
+  PYTORCH_MODULE(element_wise_add_f16x2)
+  PYTORCH_MODULE(element_wise_add_f16x8)
+  PYTORCH_MODULE(element_wise_add_f16x8_pack)
+}
