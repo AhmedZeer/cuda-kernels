@@ -1,12 +1,11 @@
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 #include <float.h>
-#include <torch/extension.h>
-#include <torch/types.h>
 #include <iostream>
 #include <stdexcept>
+#include <torch/extension.h>
+#include <torch/types.h>
 using namespace std;
-
 
 // Macros for casting.
 // We get the addres of the 'vector',
@@ -28,7 +27,8 @@ using namespace std;
 // Element Wise Add Operation.
 // gridDim(N/256), blockDim(256)
 // a: Nx1, b: Nx1, c: Nx1, c = add(a,b)
-__global__ void element_wise_add_f32_kernel(float *a, float *b, float *c, int N) {
+__global__ void element_wise_add_f32_kernel(float *a, float *b, float *c,
+                                            int N) {
 
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -42,7 +42,8 @@ __global__ void element_wise_add_f32_kernel(float *a, float *b, float *c, int N)
 // a: Nx1, b: Nx1, c: Nx1, c = add(a,b).
 // This kernel leverages float4 datatype, which
 // allows processing 4 floats at the same time.
-__global__ void element_wise_add_f32x4_kernel(float *a, float *b, float *c, uint N) {
+__global__ void element_wise_add_f32x4_kernel(float *a, float *b, float *c,
+                                              uint N) {
   uint idx = 4 * (blockIdx.x * blockDim.x + threadIdx.x);
   if (idx < N) {
     float4 reg_a = FLOAT4(a[idx]);
@@ -70,7 +71,8 @@ __global__ void element_wise_add_f16_kernel(half *a, half *b, half *c, uint N) {
 // Element Wise Add Operation.
 // gridDim(N/256), blockDim(256/2)
 // a: Nx1, b: Nx1, c: Nx1, c = add(a,b)
-__global__ void element_wise_add_f16x2_kernel(half *a, half *b, half *c, uint N) {
+__global__ void element_wise_add_f16x2_kernel(half *a, half *b, half *c,
+                                              uint N) {
   uint idx = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
   if (idx < N) {
     half2 reg_a = HALF2(a[idx]);
@@ -89,7 +91,8 @@ __global__ void element_wise_add_f16x2_kernel(half *a, half *b, half *c, uint N)
 // better compiler based optimizations,
 // L2 caching for future calls,
 // reduced overhead from controls.
-__global__ void element_wise_add_f16x8_kernel(half *a, half *b, half *c, uint N) {
+__global__ void element_wise_add_f16x8_kernel(half *a, half *b, half *c,
+                                              uint N) {
   uint idx = 8 * (blockDim.x * blockIdx.x + threadIdx.x);
   half2 reg_a_0 = HALF2(a[idx + 0]);
   half2 reg_a_1 = HALF2(a[idx + 2]);
@@ -133,16 +136,16 @@ __global__ void element_wise_add_f16x8_kernel(half *a, half *b, half *c, uint N)
 // We leverage Load Store 128Bit in a single
 // instruction.
 __global__ void element_wise_add_f16x8_packed_kernel(half *a, half *b, half *c,
-                                             int N) {
+                                                     int N) {
   int idx = 8 * (threadIdx.x + blockDim.x * blockIdx.x);
   half2 pack_a[8], pack_b[8], pack_c[8];
 
   LDST128BITS(pack_a[0]) = LDST128BITS(a[idx]);
   LDST128BITS(pack_b[0]) = LDST128BITS(b[idx]);
 
-  #pragma unroll
+#pragma unroll
   for (int i = 0; i < 8; i++) {
-    HALF2(pack_c[i]) = __hadd2(HALF2(a[i]), HALF2(b[i]));
+    HALF2(pack_c[i]) = __hadd2(HALF2(pack_a[i]), HALF2(pack_b[i]));
   }
 
   if ((idx + 7) < N) {
@@ -154,20 +157,19 @@ __global__ void element_wise_add_f16x8_packed_kernel(half *a, half *b, half *c,
 
 #define STRINGIFY(str) #str
 
-#define PYTORCH_MODULE(func) \
-  m.def(STRINGIFY(func), &func, STRINGIFY(func));
+#define PYTORCH_MODULE(func) m.def(STRINGIFY(func), &func, STRINGIFY(func));
 
 #define CHECK_TENSOR(T, th_dtype)                                              \
-  if(((T).options().dtype() != (th_dtype))) {                                   \
+  if (((T).options().dtype() != (th_dtype))) {                                 \
     std::cout << "Tensor type: " << (T).options().dtype() << std::endl;        \
-    throw runtime_error("Must be: "  #th_dtype);                           \
+    throw runtime_error("Must be: " #th_dtype);                                \
   }
 
 // Here, n_element  should not be confused with N.
 // N is the total number of elements in the tensor.
 // On the other hand, n_element is the number of
 // elements that each thread is responsible of computing.
-#define BIND_ELM_ADD(packed_type, th_dtype, element_type, n_element)            \
+#define BIND_ELM_ADD(packed_type, th_dtype, element_type, n_element)           \
   void element_wise_add_##packed_type(torch::Tensor a, torch::Tensor b,        \
                                       torch::Tensor c) {                       \
     CHECK_TENSOR(a, (th_dtype));                                               \
@@ -181,7 +183,7 @@ __global__ void element_wise_add_f16x8_packed_kernel(half *a, half *b, half *c,
       }                                                                        \
       dim3 blockDim(256 / n_element);                                          \
       dim3 gridDim((256 - 1 + N) / 256);                                       \
-      element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(                   \
+      element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(          \
           reinterpret_cast<element_type *>(a.data_ptr()),                      \
           reinterpret_cast<element_type *>(b.data_ptr()),                      \
           reinterpret_cast<element_type *>(c.data_ptr()), N);                  \
@@ -190,16 +192,16 @@ __global__ void element_wise_add_f16x8_packed_kernel(half *a, half *b, half *c,
       int features_n = a.size(1);                                              \
       int N = sample_n * features_n;                                           \
       if ((features_n / n_element) <= 1024) {                                  \
-        dim3 blockDim(features_n / n_element);                                      \
-        dim3 gridDim(sample_n);                                                     \
-        element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(                 \
+        dim3 blockDim(features_n / n_element);                                 \
+        dim3 gridDim(sample_n);                                                \
+        element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(        \
             reinterpret_cast<element_type *>(a.data_ptr()),                    \
             reinterpret_cast<element_type *>(b.data_ptr()),                    \
             reinterpret_cast<element_type *>(c.data_ptr()), N);                \
       } else {                                                                 \
-        dim3 blockDim(256 / n_element);                                             \
-        dim3 gridDim((256 + N - 1) / 256);                                          \
-        element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(                 \
+        dim3 blockDim(256 / n_element);                                        \
+        dim3 gridDim((256 + N - 1) / 256);                                     \
+        element_wise_add_##packed_type##_kernel<<<gridDim, blockDim>>>(        \
             reinterpret_cast<element_type *>(a.data_ptr()),                    \
             reinterpret_cast<element_type *>(b.data_ptr()),                    \
             reinterpret_cast<element_type *>(c.data_ptr()), N);                \
@@ -207,12 +209,12 @@ __global__ void element_wise_add_f16x8_packed_kernel(half *a, half *b, half *c,
     }                                                                          \
   }
 
-BIND_ELM_ADD(f32,          torch::kFloat,   float, 1);
-BIND_ELM_ADD(f32x4,        torch::kFloat,   float, 4);
-BIND_ELM_ADD(f16,          torch::kHalf,    half,  1);
-BIND_ELM_ADD(f16x2,        torch::kHalf,    half,  2);
-BIND_ELM_ADD(f16x8,        torch::kHalf,    half,  8);
-BIND_ELM_ADD(f16x8_packed, torch::kHalf,    half,  8);
+BIND_ELM_ADD(f32, torch::kFloat, float, 1);
+BIND_ELM_ADD(f32x4, torch::kFloat, float, 4);
+BIND_ELM_ADD(f16, torch::kHalf, half, 1);
+BIND_ELM_ADD(f16x2, torch::kHalf, half, 2);
+BIND_ELM_ADD(f16x8, torch::kHalf, half, 8);
+BIND_ELM_ADD(f16x8_packed, torch::kHalf, half, 8);
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   PYTORCH_MODULE(element_wise_add_f32)
@@ -222,3 +224,4 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   PYTORCH_MODULE(element_wise_add_f16x8)
   PYTORCH_MODULE(element_wise_add_f16x8_packed)
 }
+

@@ -64,33 +64,36 @@ def run_bench(kernel, a:torch.Tensor, b:torch.Tensor,
     duration = (end - start) * 1e3
     vals = c.flatten().detach().cpu().numpy().tolist()[-2:]
     vals = [round(val, 6) for val in vals]
-    print(f"out_{kernel_name}:", vals, "duration:", duration)
+    print(f"{vals}, duration: {duration:.2f}ms, out_{kernel_name}")
     return c
 
 def main():
     samples_nums = [1024, 2048, 4096]
     features_nums = [1024, 2048, 4096]
 
-    print("-=" * 80)
     for sample_num, feature_num in zip(samples_nums, features_nums):
-        print("Sample Num:", sample_num, "Feature Num:", feature_num)
+        print("-=" * 20, f"({sample_num}, {feature_num})", "=-" * 20 )
 
+        print("\n", "-" * 20, "FP32", "-" * 20)
         a = torch.randn([sample_num, feature_num]).cuda().float()
         b = torch.randn([sample_num, feature_num]).cuda().float()
         c = torch.randn([sample_num, feature_num]).cuda().float()
 
+        print()
         run_bench(elementwise.element_wise_add_f32, a, b, "f32", c)
         run_bench(elementwise.element_wise_add_f32x4, a, b, "f32x4", c)
 
-        print("=-" * 40)
+        print("\n", "-" * 20, "FP16", "-" * 20)
         a_16f = a.half().contiguous()
         b_16f = b.half().contiguous()
         c_16f = c.half().contiguous()
 
+        print()
         run_bench(elementwise.element_wise_add_f16, a_16f, b_16f, "f16", c_16f)
         run_bench(elementwise.element_wise_add_f16x2, a_16f, b_16f, "f16x2", c_16f)
         run_bench(elementwise.element_wise_add_f16x8, a_16f, b_16f, "f16x8", c_16f)
         run_bench(elementwise.element_wise_add_f16x8_packed, a_16f, b_16f, "f16x8_packed", c_16f)
+        print()
 
 if __name__ == "__main__":
     main()
