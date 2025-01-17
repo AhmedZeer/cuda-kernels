@@ -1,12 +1,14 @@
 #include<iostream>
 #include<cuda_runtime.h>
+#include <torch/types.h>
+#include <torch/extension.h>
 
 // Binding Macroes.
-#define STRINGIFY(str) #str
-#define PYTORCH_MODULE(func) m.def(STRINGIFY(func), &func, STRINGIFY(func));
+#define STRING(val)  #val
+#define BINDER(func) m.def(STRING(func), &func, STRING(func));
 
 // Casting Macroes.
-#define INT4(a) (reinterpert_cast<int4 *>(&(a))[0]);
+#define INT4(a) (reinterpret_cast<int4 *>(&(a))[0]);
 
 // The items in array 'a' represents
 // indices in 'b' array. We accumulate
@@ -24,10 +26,10 @@
 // 32-Bits
 // blockDim(256), gridDim((N+256-1)/256)
 // a: Nx1, b: histogramSize:1 
-__global__ void histogram_i32_kernel(float *a, float *b, int N){
+__global__ void histogram_i32_kernel(int *a, int *b, int N){
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
   if(idx < N){
-    atmoicAdd(&b[a[idx]], 1);
+    atomicAdd(&b[a[idx]], 1);
   }
 }
 
@@ -39,20 +41,20 @@ __global__ void histogram_i32_kernel(float *a, float *b, int N){
 // When we cast an arbitrary pointer at idx(i) to INT4,
 // we get a[i:4] elements which we can directly use to
 // construct 'int4' type element.
-__global__ void histogram_i32x4_kernel(float *a, float *b, int N){
+__global__ void histogram_i32x4_kernel(int *a, int *b, int N){
   int idx = 4 * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if(idx < N){
     int4 int4_a = INT4(a[idx]);
-    atmoicAdd(&b[a[int4_a.x]], 1);
-    atmoicAdd(&b[a[int4_a.y]], 1);
-    atmoicAdd(&b[a[int4_a.z]], 1);
-    atmoicAdd(&b[a[int4_a.w]], 1);
+    atomicAdd(&b[a[int4_a.x]], 1);
+    atomicAdd(&b[a[int4_a.y]], 1);
+    atomicAdd(&b[a[int4_a.z]], 1);
+    atomicAdd(&b[a[int4_a.w]], 1);
   }
 }
 
 #define LAUNCHER(kernel_name, elm_per_thread, cast_type, tensor_type) \
-  void histogram_##kernel_name##_kernel(torch::Tensor a, torch::Tensor b){ \
+  void histogram_##kernel_name##_launcher(torch::Tensor a, torch::Tensor b){ \
     int BLOCKSIZE=256/elm_per_thread; \
     int N = 1; \
     for(int i = 0; i < a.dim(); i++){ \
@@ -60,20 +62,18 @@ __global__ void histogram_i32x4_kernel(float *a, float *b, int N){
     } \
     dim3 blockDim(BLOCKSIZE); \
     dim3 gridDim((BLOCKSIZE + N - 1) / BLOCKSIZE); \
-    histogram_##kernel_name<<<gridDim, blockDim>>> \
-                      (interpert_cast<cast_type*>(a.data_ptr()), \
-                      interpert_cast<cast_type*>(b.data_ptr()), \
+    histogram_##kernel_name##_kernel<<<gridDim, blockDim>>> \
+                      (reinterpret_cast<cast_type*>(a.data_ptr()), \
+                      reinterpret_cast<cast_type*>(b.data_ptr()), \
                       N); \
   }
 
-#define STRING(val)  #str
-#define BINDER(func) m.def(STRING(func), &func, STRING(func));
 
 // Declare functions:
-LAUNCHER(i32,   1, float, torch::kFloat)
-LAUNCHER(i32x4, 4, float, torch::kFloat)
+LAUNCHER(i32,   1, int, torch::kInt32);
+LAUNCHER(i32x4, 4, int, torch::kInt32);
 
-PYBIND11_MODULE(TORCH_EXTENTION_NAME, m){
-  BINDER(historgram_i32)
-  BINDER(histogram_i32x4)
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
+  m.def("STRING(func)", &histogram_i32_launcher, "STRING(func)");
 }
+
