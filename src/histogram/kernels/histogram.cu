@@ -3,6 +3,7 @@
 #include <torch/types.h>
 #include <torch/extension.h>
 
+
 // Binding Macroes.
 #define STRING(val)  #val
 #define BINDER(func) m.def(STRING(func), &func, STRING(func));
@@ -44,7 +45,7 @@ __global__ void histogram_i32_kernel(int *a, int *b, int N){
 __global__ void histogram_i32x4_kernel(int *a, int *b, int N){
   int idx = 4 * (blockDim.x * blockIdx.x + threadIdx.x);
 
-  if(idx < N){
+  if(idx + 3< N){
     int4 int4_a = INT4(a[idx]);
     atomicAdd(&b[a[int4_a.x]], 1);
     atomicAdd(&b[a[int4_a.y]], 1);
@@ -61,7 +62,7 @@ __global__ void histogram_i32x4_kernel(int *a, int *b, int N){
       N *= a.size(i); \
     } \
     dim3 blockDim(BLOCKSIZE); \
-    dim3 gridDim((BLOCKSIZE + N - 1) / BLOCKSIZE); \
+    dim3 gridDim((256 + N - 1) / 256); \
     histogram_##kernel_name##_kernel<<<gridDim, blockDim>>> \
                       (reinterpret_cast<cast_type*>(a.data_ptr()), \
                       reinterpret_cast<cast_type*>(b.data_ptr()), \
@@ -74,6 +75,7 @@ LAUNCHER(i32,   1, int, torch::kInt32);
 LAUNCHER(i32x4, 4, int, torch::kInt32);
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
-  m.def("STRING(func)", &histogram_i32_launcher, "STRING(func)");
+  BINDER(histogram_i32_launcher)
+  BINDER(histogram_i32x4_launcher)
 }
 
