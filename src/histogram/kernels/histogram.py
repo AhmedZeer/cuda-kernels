@@ -81,10 +81,6 @@ if __name__ == "__main__":
     # Initialize input tensor 'a' with random integers in [start_idx, end_idx)
     a = torch.randint(start_idx, end_idx, (end_idx,), dtype=torch.int32).cuda()
 
-    # Initialize output tensors 'b' and 'b2' with zeros (dtype matches CUDA kernels)
-    b = torch.zeros([end_idx], dtype=torch.int32).cuda()
-    b2 = torch.zeros([end_idx], dtype=torch.int32).cuda()
-
     # Compute ground truth histogram on the CPU using torch.bincount
     ground_truth = cpu_histogram(a.cpu(), histogram_size=end_idx).cuda()
 
@@ -92,8 +88,8 @@ if __name__ == "__main__":
     # ground_truth = cpu_histogram_pure_python(a.cpu(), histogram_size=end_idx).cuda()
 
     # Launch CUDA histogram kernels
-    histogram.histogram_i32_launcher(a, b)
-    histogram.histogram_i32x4_launcher(a, b2)
+    b = histogram.histogram_i32_launcher(a)
+    b2 = histogram.histogram_i32x4_launcher(a)
 
     # Wait for CUDA kernels to finish
     torch.cuda.synchronize()

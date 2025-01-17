@@ -54,19 +54,33 @@ __global__ void histogram_i32x4_kernel(int *a, int *b, int N){
   }
 }
 
+#define CHECK_TENSOR_TYPE(a, dtype) \
+    if((a).options().dtype() != (dtype)){ \
+      throw std::runtime_error("Tensor dtypes doesnt match"); \
+    }
+
+#define CHECK_TENSOR_SIZE(a, size) \
+    if((a).size(0) != (size)){ \
+      throw std::runtime_error("Size Error"); \
+    }
+
 #define LAUNCHER(kernel_name, elm_per_thread, cast_type, tensor_type) \
-  void histogram_##kernel_name##_launcher(torch::Tensor a, torch::Tensor b){ \
+  torch::Tensor histogram_##kernel_name##_launcher(torch::Tensor a){ \
+    int N = a.size(0); \
+    CHECK_TENSOR_TYPE(a, tensor_dtype) \
+    CHECK_TENSOR_SIZE(a, N) \
     int BLOCKSIZE=256/elm_per_thread; \
-    int N = 1; \
-    for(int i = 0; i < a.dim(); i++){ \
-      N *= a.size(i); \
-    } \
+    std::tuple<torch::Tensor, torch::Tensor> max_a = torch::max(a, 0); \
+    int max_val = std::get<0>(max_a).cpu().item().to<int>(); \
+    auto options = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, 0); \
+    auto b = torch::zeros({max_val+1}, options); \
     dim3 blockDim(BLOCKSIZE); \
     dim3 gridDim((256 + N - 1) / 256); \
     histogram_##kernel_name##_kernel<<<gridDim, blockDim>>> \
                       (reinterpret_cast<cast_type*>(a.data_ptr()), \
                       reinterpret_cast<cast_type*>(b.data_ptr()), \
                       N); \
+    return b; \
   }
 
 
