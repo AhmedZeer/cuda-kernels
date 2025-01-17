@@ -43,31 +43,31 @@ __global__ void histogram_i32_kernel(int *a, int *b, int N){
 // we get a[i:4] elements which we can directly use to
 // construct 'int4' type element.
 __global__ void histogram_i32x4_kernel(int *a, int *b, int N){
-  int idx = 4 * (blockDim.x * blockIdx.x + threadIdx.x);
-
-  if(idx + 3< N){
-    int4 int4_a = INT4(a[idx]);
-    atomicAdd(&b[a[int4_a.x]], 1);
-    atomicAdd(&b[a[int4_a.y]], 1);
-    atomicAdd(&b[a[int4_a.z]], 1);
-    atomicAdd(&b[a[int4_a.w]], 1);
+  int idx = 4 * (threadIdx.x + blockDim.x * blockIdx.x);
+  if(idx < N){
+    int4 register_a = INT4(a[idx]);
+    atomicAdd(&b[register_a.x], 1);
+    atomicAdd(&b[register_a.y], 1);
+    atomicAdd(&b[register_a.z], 1);
+    atomicAdd(&b[register_a.w], 1);
   }
 }
 
-#define CHECK_TENSOR_TYPE(a, dtype) \
-    if((a).options().dtype() != (dtype)){ \
+
+#define CHECK_TENSOR_TYPE(a, th_type) \
+    if((a).options().dtype() != (th_type)){ \
       throw std::runtime_error("Tensor dtypes doesnt match"); \
     }
 
-#define CHECK_TENSOR_SIZE(a, size) \
-    if((a).size(0) != (size)){ \
+#define CHECK_TENSOR_SIZE(a, S0) \
+    if((a).size(0) != (S0)){ \
       throw std::runtime_error("Size Error"); \
     }
 
 #define LAUNCHER(kernel_name, elm_per_thread, cast_type, tensor_type) \
   torch::Tensor histogram_##kernel_name##_launcher(torch::Tensor a){ \
     int N = a.size(0); \
-    CHECK_TENSOR_TYPE(a, tensor_dtype) \
+    CHECK_TENSOR_TYPE(a, tensor_type) \
     CHECK_TENSOR_SIZE(a, N) \
     int BLOCKSIZE=256/elm_per_thread; \
     std::tuple<torch::Tensor, torch::Tensor> max_a = torch::max(a, 0); \
@@ -92,4 +92,5 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
   BINDER(histogram_i32_launcher)
   BINDER(histogram_i32x4_launcher)
 }
+
 
