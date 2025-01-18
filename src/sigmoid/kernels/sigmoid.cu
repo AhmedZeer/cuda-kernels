@@ -17,7 +17,7 @@
 #define MAX_EXP_F32  88.0f
 #define MIN_EXP_F32 -88.0f
 #define MAX_EXP_F16  11.0f
-#define MAX_EXP_F16 -11.0f
+#define MIN_EXP_F16 -11.0f
 
 #define MAX_EXP_H16 __float2half(11.0f)
 #define MIN_EXP_H16 __float2half(-11.0f)
@@ -26,7 +26,7 @@
 #define HSIGMOID(val) (__float2half(1.0f) / (__float2half(1.0f) + hexp(-(val))))
 
 #define BOUNDRIES(val) (fmaxf(fminf((val), (MAX_EXP_F32)), (MIN_EXP_F32)))
-#define HBOUNDRIES(val) (__hmax(__hmin((val), (MAX_EXP_H16)), (MIN_EXP_H32)))
+#define HBOUNDRIES(val) (__hmax(__hmin((val), (MAX_EXP_H16)), (MIN_EXP_H16)))
 
 __global__ void sigmoid_fp32_kernel(float *a, float *b, int N){
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -117,8 +117,8 @@ __global__ void sigmoid_fp16x8_kernel(half *a, half *b, int N){
 __global__ void sigmoid_fp16x8_pack_kernel(half *a, half *b, int N){
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   half pack_a[8], pack_b[8];
-  pack_a[0] = LDST128BITS(a[idx]);
-  // LDST128BITS(pack_a[0]) = LDST128BITS(a[idx]);
+  // pack_a[0] = LDST128BITS(a[idx]);
+  LDST128BITS(pack_a[0]) = LDST128BITS(a[idx]);
 
   #pragma unroll
   for(int i = 0; i < 8; i++){
@@ -145,14 +145,14 @@ __global__ void sigmoid_fp16x8_pack_kernel(half *a, half *b, int N){
     TENSOR_CHECK_TYPE(a, tensor_type) \
     int N = 1; \
     int dim = a.dim(); \
+    auto b = torch::empty_like(a); \
     if(dim != 2){ \
       for(int i = 0; i < a.dim(); i++) N *= a.size(i); \
-      auto b = torch::empty_like(a); \
       dim3 blockDim(256/elements_per_thread); \
       dim3 gridDim((256 + N - 1) / 256); \
       sigmoid_##kernel_name##_kernel<<<gridDim, blockDim>>>( \
-          reinterpert_cast<element_type*>(a.data_ptr()), \
-          reinterpert_cast<element_type*>(b.data_ptr()), \
+          reinterpret_cast<element_type*>(a.data_ptr()), \
+          reinterpret_cast<element_type*>(b.data_ptr()), \
           N); \
       return b; \
     } else { \
@@ -163,15 +163,15 @@ __global__ void sigmoid_fp16x8_pack_kernel(half *a, half *b, int N){
         dim3 blockDim(feature_size/elements_per_thread); \
         dim3 gridDim(batch_size); \
         sigmoid_##kernel_name##_kernel<<<gridDim, blockDim>>>( \
-            reinterpert_cast<element_type*>(a.data_ptr()), \
-            reinterpert_cast<element_type*>(b.data_ptr()), \
+            reinterpret_cast<element_type*>(a.data_ptr()), \
+            reinterpret_cast<element_type*>(b.data_ptr()), \
             N); \
       } else { \
         dim3 blockDim(256/elements_per_thread); \
         dim3 gridDim((N + 256 - 1)/ 256); \
         sigmoid_##kernel_name##_kernel<<<gridDim, blockDim>>>( \
-            reinterpert_cast<element_type*>(a.data_ptr()), \
-            reinterpert_cast<element_type*>(b.data_ptr()), \
+            reinterpret_cast<element_type*>(a.data_ptr()), \
+            reinterpret_cast<element_type*>(b.data_ptr()), \
             N); \
       } \
     } \
@@ -186,7 +186,6 @@ LAUNCHER(fp32x4, 4, torch::kFloat, float);
 LAUNCHER(fp32x4o, 4, torch::kFloat, float);
 
 LAUNCHER(fp16, 1, torch::kHalf, half);
-LAUNCHER(fp16x2, 2, torch::kHalf, half);
 LAUNCHER(fp16x2o, 2, torch::kHalf, half);
 LAUNCHER(fp16x8, 8, torch::kHalf, half);
 LAUNCHER(fp16x8_pack, 8, torch::kHalf, half);
@@ -196,7 +195,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
   BIND(sigmoid_fp32x4_launcher)
   BIND(sigmoid_fp32x4o_launcher)
   BIND(sigmoid_fp16_launcher)
-  BIND(sigmoid_fp16x2_launcher)
   BIND(sigmoid_fp16x2o_launcher)
   BIND(sigmoid_fp16x8_launcher)
   BIND(sigmoid_fp16x8_pack_launcher)
