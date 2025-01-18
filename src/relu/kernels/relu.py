@@ -64,9 +64,9 @@ def main():
       a_16f = a.half().contiguous()
 
       print()
-      run_bench(relu.sigmoid_fp16_launcher, a_16f, "f16")
-      run_bench(relu.sigmoid_fp16x2o_launcher, a_16f, "f16x2o")
-      run_bench(relu.sigmoid_fp16x8_launcher, a_16f, "f16x8")
+      run_bench(relu.relu_fp16_launcher, a_16f, "f16")
+      run_bench(relu.relu_fp16x2o_launcher, a_16f, "f16x2o")
+      run_bench(relu.relu_fp16x8_launcher, a_16f, "f16x8")
       print()
 
 
