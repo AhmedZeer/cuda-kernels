@@ -65,10 +65,11 @@ def main():
 
       print()
       run_bench(elu.elu_fp16_launcher, a_16f, "f16")
-      run_bench(elu.elu_fp16x2o_launcher, a_16f, "f16x2o")
+      run_bench(elu.elu_fp16x2_launcher, a_16f, "f16x2")
       run_bench(elu.elu_fp16x8_launcher, a_16f, "f16x8")
       print()
 
 
 if __name__ == "__main__":
   main()
+

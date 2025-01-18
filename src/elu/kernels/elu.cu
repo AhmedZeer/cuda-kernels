@@ -8,12 +8,12 @@
 #define FLOAT4(val) reinterpret_cast<float4 *>(&(val))[0]
 
 #define ELU(x,alpha) (((x) < (0.0f)) ? ((alpha)*(expf(x)-1.0f)) : (0.0f))
-#define HELU(x,alpha) (((x) < (__float2half(0.0f))) ? ((alpha)*(expf(x)-(__float2half(1.0f)))) : (__float2half(0.0f)))
+#define HELU(x,alpha) (((x) < (__float2half(0.0f))) ? ((alpha)*((hexp(x))-(__float2half(1.0f)))) : (__float2half(0.0f)))
 
 __global__ void elu_fp32_kernel(float *a, float *b, int N) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < N) {
-    float alpha = 1.0f
+    float alpha = 1.0f;
     b[idx] = ELU(a[idx], alpha);
   }
 }
@@ -37,8 +37,9 @@ __global__ void elu_fp32x4_kernel(float *a, float *b, int N) {
 
 __global__ void elu_fp16_kernel(half *a, half *b, int N) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  half alpha = 1.0f;
   if (idx < N) {
-    b[idx] = HELU(a[idx]);
+    b[idx] = HELU(a[idx], alpha);
   }
 }
 
@@ -55,18 +56,18 @@ __global__ void elu_fp16x2_kernel(half *a, half *b, int N) {
   }
 }
 
-__global__ void relu_fp16x8_kernel(half *a, half *b, int N) {
+__global__ void elu_fp16x8_kernel(half *a, half *b, int N) {
   int idx = 8 * (blockIdx.x * blockDim.x + threadIdx.x);
   half2 reg_a[8], reg_b[8];
   FLOAT4(reg_a[0]) = FLOAT4(a[idx]);
 
   if (idx < N) {
-    float alpha = 1.0f;
+    half alpha = 1.0f;
 
     #pragma unroll
     for (int i = 0; i < 8; i++) {
-      reg_b[i + 0] = HELU(reg_a[i].x, alpha);
-      reg_b[i + 1] = HELU(reg_a[i].y, alpha);
+      reg_b[i].x = HELU(reg_a[i].x, alpha);
+      reg_b[i].y = HELU(reg_a[i].y, alpha);
     }
 
     FLOAT4(b[idx]) = FLOAT4(reg_b[0]);
@@ -115,7 +116,6 @@ LAUNCHER(fp32x4, float, torch::kFloat, 4)
 
 LAUNCHER(fp16, half, torch::kHalf, 1)
 LAUNCHER(fp16x2, half, torch::kHalf, 2)
-LAUNCHER(fp16x2o, half, torch::kHalf, 2)
 LAUNCHER(fp16x8, half, torch::kHalf, 8)
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
@@ -123,7 +123,5 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   BIND(elu_fp32x4_launcher)
   BIND(elu_fp16_launcher)
   BIND(elu_fp16x2_launcher)
-  BIND(elu_fp16x2o_launcher)
   BIND(elu_fp16x8_launcher)
 }
-
